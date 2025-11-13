@@ -1,0 +1,10 @@
+# Vercel ignore file
+backend/
+venv/
+.env
+.env.*
+!.env.*.example
+*.pyc
+__pycache__/
+.pytest_cache/
+*.log
