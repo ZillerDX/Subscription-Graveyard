@@ -41,22 +41,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = async (credentials: RegisterCredentials) => {
     try {
       const response = await authService.register(credentials)
-
-      // Store token
       localStorage.setItem('token', response.access_token)
       setToken(response.access_token)
 
-      // Fetch user data
       const userData = await authService.me()
       setUser(userData)
 
-      // Show success toast
-      toast.success('Account created successfully! Welcome to Subscription Graveyard.')
-
-      // Navigate to dashboard
+      toast.success('Account created successfully! Welcome aboard.')
       navigate('/')
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || 'Registration failed'
+      const errorMessage = error.response?.data?.detail || error.message || 'Registration failed'
       toast.error(errorMessage)
       throw new Error(errorMessage)
     }
@@ -68,39 +62,33 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (credentials: LoginCredentials) => {
     try {
       const response = await authService.login(credentials)
-
-      // Store token
       localStorage.setItem('token', response.access_token)
       setToken(response.access_token)
 
-      // Fetch user data
       const userData = await authService.me()
       setUser(userData)
 
-      // Show success toast
-      toast.success(`Welcome back, ${userData.email}!`)
-
-      // Navigate to dashboard
+      toast.success(`Welcome back, ${userData.email}`)
       navigate('/')
     } catch (error: any) {
-      const errorMessage = error.response?.data?.detail || 'Login failed'
+      const errorMessage = error.response?.data?.detail || error.message || 'Login failed'
       toast.error(errorMessage)
       throw new Error(errorMessage)
     }
   }
 
   /**
-   * Login as demo user (interactive mock mode)
+   * Login as demo user
    */
   const loginAsDemo = () => {
-    localStorage.setItem('token', 'demo_token')
-    setToken('demo_token')
+    const res = authService.loginDemo()
+    setToken(res.access_token)
     setUser({
-      id: 'demo-user-123',
+      id: 'demo-user-id',
       email: 'demo@subscription-graveyard.dev',
-      created_at: new Date().toISOString(),
+      created_at: new Date('2025-01-01T00:00:00Z').toISOString(),
     })
-    toast.success('Welcome to Subscription Graveyard Demo! 🚀')
+    toast.success('Demo environment loaded.')
     navigate('/')
   }
 
@@ -109,9 +97,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    */
   const logout = () => {
     localStorage.removeItem('token')
+    localStorage.removeItem('sg_active_session')
     setToken(null)
     setUser(null)
-    toast.success('Logged out successfully')
+    toast.success('Signed out successfully')
     navigate('/login')
   }
 

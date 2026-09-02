@@ -19,7 +19,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', message })
   return (
     <div className="flex flex-col items-center justify-center py-8">
       <svg
-        className={`animate-spin text-primary-600 ${sizeClasses[size]}`}
+        className={`animate-spin text-rose-500 ${sizeClasses[size]}`}
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
@@ -38,7 +38,7 @@ const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', message })
           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
         ></path>
       </svg>
-      {message && <p className="mt-3 text-sm text-gray-600">{message}</p>}
+      {message && <p className="mt-3 text-xs font-medium text-slate-400">{message}</p>}
     </div>
   )
 }

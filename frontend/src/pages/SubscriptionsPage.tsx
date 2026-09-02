@@ -1,16 +1,28 @@
 /**
- * Subscriptions Page
- * Main page for managing subscriptions
+ * Subscriptions Management Page - Modern Pro SaaS Design
+ * Strict zero-emoji, exact financial calculations, pro dark theme
  */
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
+import {
+  FiPlus,
+  FiDownload,
+  FiSearch,
+  FiX,
+  FiLayers,
+  FiDollarSign,
+  FiCheckCircle,
+  FiXCircle,
+  FiList,
+} from 'react-icons/fi'
 import { subscriptionService } from '../services/subscriptionService'
 import type { Subscription, SubscriptionCreate, SubscriptionStatus } from '../types/subscription'
 import SubscriptionList from '../components/subscriptions/SubscriptionList'
 import SubscriptionForm from '../components/subscriptions/SubscriptionForm'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import { exportSubscriptionsToCSV } from '../utils/csvExport'
+import { getMonthlyCost } from '../utils/calculations'
 
 const SubscriptionsPage: React.FC = () => {
   const queryClient = useQueryClient()
@@ -18,6 +30,7 @@ const SubscriptionsPage: React.FC = () => {
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null)
   const [statusFilter, setStatusFilter] = useState<SubscriptionStatus | 'all'>('active')
   const [searchQuery, setSearchQuery] = useState('')
+
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
     subscriptionId: string | null
@@ -45,91 +58,84 @@ const SubscriptionsPage: React.FC = () => {
       subscriptionService.getAll(statusFilter === 'all' ? undefined : statusFilter),
   })
 
-  // Fetch all subscriptions for accurate counts
+  // Fetch all subscriptions for accurate metric counters
   const { data: allSubscriptions = [] } = useQuery({
     queryKey: ['subscriptions', 'all'],
     queryFn: () => subscriptionService.getAll(),
   })
 
-  // Create subscription mutation
+  // Invalidate queries helper
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
+    queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+    queryClient.invalidateQueries({ queryKey: ['dashboard-kill-zone'] })
+    queryClient.invalidateQueries({ queryKey: ['dashboard-category-breakdown'] })
+  }
+
+  // Create mutation
   const createMutation = useMutation({
     mutationFn: subscriptionService.create,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-kill-zone'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-category-breakdown'] })
+      invalidateAll()
       setIsFormOpen(false)
       setEditingSubscription(null)
-      toast.success(`Subscription "${data.name}" created successfully!`)
+      toast.success(`"${data.name}" added to active subscriptions.`)
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to create subscription')
+      toast.error(error.message || 'Failed to create subscription')
     },
   })
 
-  // Update subscription mutation
+  // Update mutation
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: SubscriptionCreate }) =>
       subscriptionService.update(id, data),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-kill-zone'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-category-breakdown'] })
+      invalidateAll()
       setIsFormOpen(false)
       setEditingSubscription(null)
-      toast.success(`Subscription "${data.name}" updated successfully!`)
+      toast.success(`"${data.name}" updated successfully.`)
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to update subscription')
+      toast.error(error.message || 'Failed to update subscription')
     },
   })
 
-  // Cancel subscription mutation
+  // Cancel mutation (move to Graveyard)
   const cancelMutation = useMutation({
     mutationFn: subscriptionService.cancel,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-kill-zone'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-category-breakdown'] })
+      invalidateAll()
       setConfirmDialog({ isOpen: false, subscriptionId: null, subscriptionName: null })
-      toast.success(`Subscription "${data.name}" cancelled successfully`)
+      toast.success(`"${data.name}" moved to the Graveyard.`)
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to cancel subscription')
+      toast.error(error.message || 'Failed to cancel subscription')
     },
   })
 
-  // Reactivate subscription mutation
+  // Reactivate mutation
   const reactivateMutation = useMutation({
     mutationFn: subscriptionService.reactivate,
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-kill-zone'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-category-breakdown'] })
-      toast.success(`Subscription "${data.name}" reactivated successfully!`)
+      invalidateAll()
+      toast.success(`"${data.name}" restored from Graveyard to Active.`)
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to reactivate subscription')
+      toast.error(error.message || 'Failed to reactivate subscription')
     },
   })
 
-  // Delete subscription permanently mutation
+  // Delete permanently mutation
   const deleteMutation = useMutation({
     mutationFn: subscriptionService.delete,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-kill-zone'] })
-      queryClient.invalidateQueries({ queryKey: ['dashboard-category-breakdown'] })
+      invalidateAll()
       setDeleteDialog({ isOpen: false, subscriptionId: null, subscriptionName: null })
-      toast.success('Subscription deleted permanently')
+      toast.success('Subscription deleted permanently.')
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Failed to delete subscription')
+      toast.error(error.message || 'Failed to delete subscription')
     },
   })
 
@@ -185,203 +191,196 @@ const SubscriptionsPage: React.FC = () => {
 
   // Filter subscriptions based on search query
   const filteredSubscriptions = subscriptions.filter((subscription) => {
-    const matchesSearch =
-      searchQuery === '' ||
-      subscription.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      subscription.category?.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesSearch
+    const q = searchQuery.toLowerCase().trim()
+    if (!q) return true
+    return (
+      subscription.name.toLowerCase().includes(q) ||
+      (subscription.category && subscription.category.toLowerCase().includes(q))
+    )
   })
 
-  const activeCount = allSubscriptions.filter((s) => s.status === 'active').length
-  const totalMonthlyBurn = allSubscriptions
-    .filter((s) => s.status === 'active')
-    .reduce((sum, s) => {
-      const cost = parseFloat(s.cost.toString())
-      const monthlyCost = s.billing_cycle === 'monthly' ? cost : cost / 12
-      return sum + (isNaN(monthlyCost) ? 0 : monthlyCost)
-    }, 0)
+  // Accurate Metrics calculations
+  const activeSubs = allSubscriptions.filter((s) => s.status === 'active')
+  const cancelledSubs = allSubscriptions.filter((s) => s.status === 'cancelled')
+
+  const totalMonthlyBurn = activeSubs.reduce((sum, s) => sum + getMonthlyCost(s), 0)
+  const totalYearlyCost = Math.round(totalMonthlyBurn * 12 * 100) / 100
+
+  const totalMonthlySaved = cancelledSubs.reduce((sum, s) => sum + getMonthlyCost(s), 0)
+  const totalYearlySaved = Math.round(totalMonthlySaved * 12 * 100) / 100
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 animate-slideDown">
+    <div className="space-y-6 pb-12 animate-fadeIn">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-            My Subscriptions
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            Subscriptions
           </h1>
-          <p className="mt-2 text-base text-gray-700 font-medium">
-            Manage all your recurring subscriptions in one place
+          <p className="text-xs sm:text-sm text-slate-400 mt-1 font-medium">
+            Manage your recurring commitments, monitor costs, and purge zombie subscriptions
           </p>
         </div>
-        <div className="flex flex-wrap gap-3">
+
+        <div className="flex items-center space-x-2.5">
           <button
             onClick={() => {
               try {
                 exportSubscriptionsToCSV(subscriptions)
-                toast.success('Subscriptions exported successfully!')
+                toast.success('CSV export generated successfully.')
               } catch (error: any) {
-                toast.error(error.message || 'Failed to export subscriptions')
+                toast.error(error.message || 'Failed to export CSV')
               }
             }}
             disabled={subscriptions.length === 0}
-            className="flex items-center space-x-2 px-5 py-3 bg-white border-2 border-gray-300 text-gray-800 rounded-xl hover:bg-gray-50 hover:border-gray-400 font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-95 shadow-md"
+            className="inline-flex items-center space-x-2 px-3.5 py-2 bg-slate-900/80 hover:bg-slate-800 text-slate-300 border border-slate-700/80 rounded-xl text-xs font-semibold tracking-wide transition-all shadow-xs disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+            <FiDownload className="w-3.5 h-3.5 shrink-0" />
             <span>Export CSV</span>
           </button>
           <button
             onClick={handleAddNew}
-            className="flex items-center space-x-2 px-5 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl hover:from-primary-700 hover:to-primary-800 font-semibold transition-all transform hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+            className="inline-flex items-center space-x-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold tracking-wide shadow-sm hover:shadow-rose-500/20 transition-all cursor-pointer"
           >
-            <span className="text-xl">+</span>
+            <FiPlus className="w-3.5 h-3.5 shrink-0" />
             <span>Add Subscription</span>
           </button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 animate-slideUp">
-        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl shadow-lg p-6 border-2 border-blue-200 transform hover:scale-105 transition-all">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm font-bold text-blue-800 uppercase tracking-wide">Active Subscriptions</div>
-            <div className="text-3xl">📊</div>
+      {/* Metrics Summary Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="bg-slate-900/70 border border-slate-800/90 rounded-xl p-5 backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-400 tracking-wider uppercase">
+              Active Subscriptions
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+              <FiLayers className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="text-4xl font-extrabold text-blue-900">{activeCount}</div>
-          <div className="text-xs font-semibold text-blue-700 mt-1">Currently tracking</div>
-        </div>
-
-        <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-2xl shadow-lg p-6 border-2 border-red-200 transform hover:scale-105 transition-all">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm font-bold text-red-800 uppercase tracking-wide">Monthly Burn Rate</div>
-            <div className="text-3xl">💸</div>
-          </div>
-          <div className="text-4xl font-extrabold text-red-900">
-            ${totalMonthlyBurn.toFixed(2)}
-          </div>
-          <div className="text-xs font-semibold text-red-700 mt-1">
-            ${(totalMonthlyBurn * 12).toFixed(2)}/year
+          <div className="mt-2.5">
+            <div className="text-2xl font-bold text-white tracking-tight">{activeSubs.length}</div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              out of {allSubscriptions.length} total recorded
+            </p>
           </div>
         </div>
 
-        <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl shadow-lg p-6 border-2 border-yellow-200 transform hover:scale-105 transition-all">
-          <div className="flex items-center justify-between mb-3">
-            <div className="text-sm font-bold text-yellow-800 uppercase tracking-wide">Average Value Score</div>
-            <div className="text-3xl">⭐</div>
+        <div className="bg-slate-900/70 border border-slate-800/90 rounded-xl p-5 backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-slate-400 tracking-wider uppercase">
+              Active Monthly Burn
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center">
+              <FiDollarSign className="w-3.5 h-3.5" />
+            </div>
           </div>
-          <div className="text-4xl font-extrabold text-yellow-900">
-            {activeCount > 0
-              ? (
-                  allSubscriptions
-                    .filter((s) => s.status === 'active')
-                    .reduce((sum, s) => sum + s.value_score, 0) / activeCount
-                ).toFixed(1)
-              : '0'}
-            /5
+          <div className="mt-2.5">
+            <div className="text-2xl font-bold text-white tracking-tight">
+              ${totalMonthlyBurn.toFixed(2)}
+              <span className="text-xs text-slate-500 font-normal ml-1">/mo</span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Projected ${totalYearlyCost.toFixed(2)}/yr
+            </p>
           </div>
-          <div className="text-xs font-semibold text-yellow-700 mt-1">Overall satisfaction</div>
+        </div>
+
+        <div className="bg-slate-900/70 border border-slate-800/90 rounded-xl p-5 backdrop-blur-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-semibold text-emerald-400 tracking-wider uppercase">
+              Graveyard Savings
+            </span>
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+              <FiCheckCircle className="w-3.5 h-3.5" />
+            </div>
+          </div>
+          <div className="mt-2.5">
+            <div className="text-2xl font-bold text-emerald-400 tracking-tight">
+              +${totalMonthlySaved.toFixed(2)}
+              <span className="text-xs text-slate-500 font-normal ml-1">/mo</span>
+            </div>
+            <p className="text-xs text-slate-400 mt-0.5">
+              +${totalYearlySaved.toFixed(2)}/yr from {cancelledSubs.length} killed subs
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="bg-white rounded-2xl shadow-lg p-5 border-2 border-gray-200 animate-fadeIn">
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-            <svg
-              className="h-5 w-5 text-gray-500"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+      {/* Filter and Search Bar */}
+      <div className="bg-slate-900/70 border border-slate-800/90 rounded-2xl p-4 backdrop-blur-sm flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm">
+        {/* Status Filter Tabs */}
+        <div className="inline-flex p-1 bg-slate-950/70 border border-slate-800 rounded-xl">
+          <button
+            onClick={() => setStatusFilter('active')}
+            className={`inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+              statusFilter === 'active'
+                ? 'bg-slate-800 text-white shadow-xs border border-slate-700/60'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <FiCheckCircle className="w-3 h-3 text-emerald-400" />
+            <span>Active ({activeSubs.length})</span>
+          </button>
+          <button
+            onClick={() => setStatusFilter('cancelled')}
+            className={`inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+              statusFilter === 'cancelled'
+                ? 'bg-slate-800 text-white shadow-xs border border-slate-700/60'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <FiXCircle className="w-3 h-3 text-rose-400" />
+            <span>Graveyard ({cancelledSubs.length})</span>
+          </button>
+          <button
+            onClick={() => setStatusFilter('all')}
+            className={`inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold tracking-wide transition-all ${
+              statusFilter === 'all'
+                ? 'bg-slate-800 text-white shadow-xs border border-slate-700/60'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <FiList className="w-3 h-3 text-indigo-400" />
+            <span>All ({allSubscriptions.length})</span>
+          </button>
+        </div>
+
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-xs">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+            <FiSearch className="w-3.5 h-3.5" />
           </div>
           <input
             type="text"
-            placeholder="Search by name or category..."
+            placeholder="Search subscriptions..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="block w-full pl-12 pr-12 py-3 border-2 border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-base font-medium text-gray-900 transition-all"
+            className="w-full pl-9 pr-8 py-1.5 bg-slate-950/60 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
           />
           {searchQuery && (
             <button
               onClick={() => setSearchQuery('')}
-              className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-800 transition-colors"
+              className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-500 hover:text-slate-300"
             >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <FiX className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
-        {searchQuery && (
-          <p className="mt-3 text-sm text-gray-700 font-semibold">
-            Found {filteredSubscriptions.length} subscription{filteredSubscriptions.length !== 1 ? 's' : ''} matching "{searchQuery}"
-          </p>
-        )}
       </div>
 
-      {/* Filter Tabs */}
-      <div className="bg-white rounded-2xl shadow-lg border-2 border-gray-200 overflow-hidden animate-scaleIn">
-        <div className="border-b-2 border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100">
-          <nav className="flex -mb-px">
-            <button
-              onClick={() => setStatusFilter('active')}
-              className={`flex-1 px-6 py-4 text-sm font-bold border-b-4 transition-all ${
-                statusFilter === 'active'
-                  ? 'border-primary-600 text-primary-700 bg-primary-50'
-                  : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              ✓ Active ({allSubscriptions.filter((s) => s.status === 'active').length})
-            </button>
-            <button
-              onClick={() => setStatusFilter('cancelled')}
-              className={`flex-1 px-6 py-4 text-sm font-bold border-b-4 transition-all ${
-                statusFilter === 'cancelled'
-                  ? 'border-primary-600 text-primary-700 bg-primary-50'
-                  : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              ✕ Cancelled ({allSubscriptions.filter((s) => s.status === 'cancelled').length})
-            </button>
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`flex-1 px-6 py-4 text-sm font-bold border-b-4 transition-all ${
-                statusFilter === 'all'
-                  ? 'border-primary-600 text-primary-700 bg-primary-50'
-                  : 'border-transparent text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
-            >
-              📋 All ({allSubscriptions.length})
-            </button>
-          </nav>
-        </div>
+      {/* Subscription Card Grid */}
+      <SubscriptionList
+        subscriptions={filteredSubscriptions}
+        onEdit={handleEdit}
+        onCancel={handleCancelClick}
+        onReactivate={handleReactivate}
+        onDelete={handleDeleteClick}
+        isLoading={isLoading}
+      />
 
-        <div className="p-6">
-          <SubscriptionList
-            subscriptions={filteredSubscriptions}
-            onEdit={handleEdit}
-            onCancel={handleCancelClick}
-            onReactivate={handleReactivate}
-            onDelete={handleDeleteClick}
-            isLoading={isLoading}
-          />
-        </div>
-      </div>
-
-      {/* Subscription Form Modal */}
+      {/* Add / Edit Modal */}
       {isFormOpen && (
         <SubscriptionForm
           subscription={editingSubscription}
@@ -400,23 +399,23 @@ const SubscriptionsPage: React.FC = () => {
           setConfirmDialog({ isOpen: false, subscriptionId: null, subscriptionName: null })
         }
         onConfirm={handleConfirmCancel}
-        title="Cancel Subscription"
-        message={`Are you sure you want to cancel "${confirmDialog.subscriptionName}"? This will mark it as cancelled and exclude it from your monthly burn calculations.`}
-        confirmText="Yes, Cancel"
+        title="Send Subscription to Graveyard"
+        message={`Are you sure you want to cancel "${confirmDialog.subscriptionName}"? It will be moved to the Graveyard and marked as realized savings.`}
+        confirmText="Kill Subscription"
         confirmStyle="danger"
         isLoading={cancelMutation.isPending}
       />
 
-      {/* Delete Permanently Confirmation Dialog */}
+      {/* Permanent Delete Confirmation Dialog */}
       <ConfirmDialog
         isOpen={deleteDialog.isOpen}
         onClose={() =>
           setDeleteDialog({ isOpen: false, subscriptionId: null, subscriptionName: null })
         }
         onConfirm={handleConfirmDelete}
-        title="Delete Subscription Permanently"
-        message={`⚠️ Are you absolutely sure you want to PERMANENTLY delete "${deleteDialog.subscriptionName}"? This action CANNOT be undone and all data will be lost forever!`}
-        confirmText="Yes, Delete Forever"
+        title="Permanently Delete Record"
+        message={`Are you sure you want to permanently delete "${deleteDialog.subscriptionName}"? This action cannot be reversed.`}
+        confirmText="Delete Permanently"
         confirmStyle="danger"
         isLoading={deleteMutation.isPending}
       />

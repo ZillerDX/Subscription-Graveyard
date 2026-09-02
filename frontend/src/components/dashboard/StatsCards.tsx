@@ -1,8 +1,9 @@
 /**
- * Stats Cards Component
- * Displays key metrics in card format
+ * Financial Key Metric Cards - Modern Pro SaaS Design
+ * Mathematically sound, zero emojis, crisp vector iconography
  */
 import React from 'react'
+import { FiDollarSign, FiLayers, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi'
 import type { DashboardStats } from '../../services/dashboardService'
 
 interface StatsCardsProps {
@@ -13,70 +14,119 @@ interface StatsCardsProps {
 const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false }) => {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="bg-white rounded-lg shadow p-6 animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-            <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+          <div
+            key={i}
+            className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-5 animate-pulse"
+          >
+            <div className="h-3 bg-slate-800 rounded w-1/3 mb-3" />
+            <div className="h-7 bg-slate-800 rounded w-2/3 mb-2" />
+            <div className="h-3 bg-slate-800/60 rounded w-1/2" />
           </div>
         ))}
       </div>
     )
   }
 
+  const avgCostPerSub =
+    stats.active_count > 0 ? (stats.monthly_burn / stats.active_count).toFixed(2) : '0.00'
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-      {/* Active Subscriptions */}
-      <div className="bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 rounded-2xl shadow-lg p-6 border-2 border-blue-300 hover:shadow-2xl hover:border-blue-400 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 animate-slideUp">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 1. Monthly Burn Rate */}
+      <div className="bg-slate-900/70 border border-slate-800/90 hover:border-slate-700/80 rounded-xl p-5 backdrop-blur-sm shadow-sm transition-all duration-200 group">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-blue-800 uppercase tracking-wide">Active</p>
-            <p className="text-4xl font-extrabold text-blue-900 mt-2 drop-shadow-sm">{stats.active_count}</p>
-            <p className="text-xs text-blue-700 mt-1 font-semibold">subscriptions</p>
+          <span className="text-xs font-semibold text-slate-400 tracking-wider uppercase">
+            Monthly Burn
+          </span>
+          <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center group-hover:bg-rose-500/20 transition-colors">
+            <FiDollarSign className="w-4 h-4 shrink-0" />
           </div>
-          <div className="text-5xl transform transition-transform duration-300 hover:scale-125 hover:rotate-12">📊</div>
         </div>
-      </div>
-
-      {/* Monthly Burn Rate */}
-      <div className="bg-gradient-to-br from-red-50 via-red-100 to-red-200 rounded-2xl shadow-lg p-6 border-2 border-red-300 hover:shadow-2xl hover:border-red-400 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 animate-slideUp animate-delay-100">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-red-800 uppercase tracking-wide">Monthly Burn</p>
-            <p className="text-4xl font-extrabold text-red-900 mt-2 drop-shadow-sm">
-              ${stats.monthly_burn.toFixed(2)}
-            </p>
-            <p className="text-xs text-red-700 mt-1 font-semibold">per month</p>
+        <div className="mt-3">
+          <div className="text-2xl font-bold tracking-tight text-white">
+            ${stats.monthly_burn.toFixed(2)}
+            <span className="text-xs text-slate-500 font-normal ml-1">/mo</span>
           </div>
-          <div className="text-5xl transform transition-transform duration-300 hover:scale-125 hover:rotate-12">🔥</div>
-        </div>
-      </div>
-
-      {/* Yearly Cost */}
-      <div className="bg-gradient-to-br from-orange-50 via-orange-100 to-orange-200 rounded-2xl shadow-lg p-6 border-2 border-orange-300 hover:shadow-2xl hover:border-orange-400 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 animate-slideUp animate-delay-200">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-orange-800 uppercase tracking-wide">Yearly Cost</p>
-            <p className="text-4xl font-extrabold text-orange-900 mt-2 drop-shadow-sm">
+          <p className="text-xs text-slate-400 mt-1 flex items-center justify-between">
+            <span>Projected Annual</span>
+            <span className="font-semibold text-slate-300">
               ${stats.yearly_cost.toFixed(2)}
-            </p>
-            <p className="text-xs text-orange-700 mt-1 font-semibold">per year</p>
-          </div>
-          <div className="text-5xl transform transition-transform duration-300 hover:scale-125 hover:rotate-12">💸</div>
+            </span>
+          </p>
         </div>
       </div>
 
-      {/* Total Subscriptions */}
-      <div className="bg-gradient-to-br from-purple-50 via-purple-100 to-purple-200 rounded-2xl shadow-lg p-6 border-2 border-purple-300 hover:shadow-2xl hover:border-purple-400 transition-all duration-300 transform hover:scale-105 hover:-translate-y-1 animate-slideUp animate-delay-300">
+      {/* 2. Active Subscriptions */}
+      <div className="bg-slate-900/70 border border-slate-800/90 hover:border-slate-700/80 rounded-xl p-5 backdrop-blur-sm shadow-sm transition-all duration-200 group">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-bold text-purple-800 uppercase tracking-wide">Total</p>
-            <p className="text-4xl font-extrabold text-purple-900 mt-2 drop-shadow-sm">{stats.total_count}</p>
-            <p className="text-xs text-purple-700 mt-1 font-semibold">
-              {stats.total_count - stats.active_count} cancelled
-            </p>
+          <span className="text-xs font-semibold text-slate-400 tracking-wider uppercase">
+            Active Subscriptions
+          </span>
+          <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center group-hover:bg-indigo-500/20 transition-colors">
+            <FiLayers className="w-4 h-4 shrink-0" />
           </div>
-          <div className="text-5xl transform transition-transform duration-300 hover:scale-125 hover:rotate-12">📋</div>
+        </div>
+        <div className="mt-3">
+          <div className="text-2xl font-bold tracking-tight text-white">
+            {stats.active_count}
+            <span className="text-xs text-slate-500 font-normal ml-1">
+              active / {stats.total_count} total
+            </span>
+          </div>
+          <p className="text-xs text-slate-400 mt-1 flex items-center justify-between">
+            <span>Average Cost</span>
+            <span className="font-semibold text-slate-300">${avgCostPerSub}/mo</span>
+          </p>
+        </div>
+      </div>
+
+      {/* 3. Kill Zone Waste (At Risk) */}
+      <div className="bg-slate-900/70 border border-slate-800/90 hover:border-slate-700/80 rounded-xl p-5 backdrop-blur-sm shadow-sm transition-all duration-200 group">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-rose-400 tracking-wider uppercase flex items-center space-x-1.5">
+            <span>Kill Zone Waste</span>
+          </span>
+          <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 flex items-center justify-center group-hover:bg-rose-500/20 transition-colors">
+            <FiAlertTriangle className="w-4 h-4 shrink-0" />
+          </div>
+        </div>
+        <div className="mt-3">
+          <div className="text-2xl font-bold tracking-tight text-rose-400">
+            ${stats.kill_zone_monthly_waste.toFixed(2)}
+            <span className="text-xs text-slate-500 font-normal ml-1">/mo</span>
+          </div>
+          <p className="text-xs text-slate-400 mt-1 flex items-center justify-between">
+            <span>Cancel Candidates</span>
+            <span className="font-semibold text-rose-400">
+              {stats.kill_zone_count} target{stats.kill_zone_count !== 1 ? 's' : ''}
+            </span>
+          </p>
+        </div>
+      </div>
+
+      {/* 4. Realized Savings (From Graveyard) */}
+      <div className="bg-slate-900/70 border border-slate-800/90 hover:border-slate-700/80 rounded-xl p-5 backdrop-blur-sm shadow-sm transition-all duration-200 group">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold text-emerald-400 tracking-wider uppercase">
+            Graveyard Savings
+          </span>
+          <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center group-hover:bg-emerald-500/20 transition-colors">
+            <FiCheckCircle className="w-4 h-4 shrink-0" />
+          </div>
+        </div>
+        <div className="mt-3">
+          <div className="text-2xl font-bold tracking-tight text-emerald-400">
+            +${stats.realized_monthly_savings.toFixed(2)}
+            <span className="text-xs text-slate-500 font-normal ml-1">/mo</span>
+          </div>
+          <p className="text-xs text-slate-400 mt-1 flex items-center justify-between">
+            <span>Annual Saved</span>
+            <span className="font-semibold text-emerald-400">
+              +${stats.realized_yearly_savings.toFixed(2)}/yr
+            </span>
+          </p>
         </div>
       </div>
     </div>

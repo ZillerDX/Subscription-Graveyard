@@ -10,6 +10,11 @@ import type {
   SubscriptionStatus,
 } from '../types/subscription'
 import type { DashboardStats, KillZoneDataPoint, CategoryBreakdown } from './dashboardService'
+import {
+  computeDashboardStats,
+  computeKillZoneData,
+  computeCategoryBreakdown,
+} from '../utils/calculations'
 
 const DEMO_STORAGE_KEY = 'demo_subscriptions'
 export const DEMO_TOKEN = 'demo_token'
@@ -237,55 +242,16 @@ export const demoSubscriptionService = {
 export const demoDashboardService = {
   getStats: async (): Promise<DashboardStats> => {
     const list = getStoredDemoSubscriptions()
-    const activeSubs = list.filter((s) => s.status === 'active')
-
-    const monthly_burn = activeSubs.reduce((sum, s) => {
-      const monthly = s.billing_cycle === 'monthly' ? s.cost : s.cost / 12
-      return sum + monthly
-    }, 0)
-
-    return {
-      monthly_burn: Math.round(monthly_burn * 100) / 100,
-      yearly_cost: Math.round(monthly_burn * 12 * 100) / 100,
-      active_count: activeSubs.length,
-      total_count: list.length,
-    }
+    return computeDashboardStats(list)
   },
 
   getKillZoneData: async (): Promise<KillZoneDataPoint[]> => {
     const list = getStoredDemoSubscriptions()
-    const activeSubs = list.filter((s) => s.status === 'active')
-
-    return activeSubs.map((s) => ({
-      id: s.id,
-      name: s.name,
-      cost: s.billing_cycle === 'monthly' ? s.cost : Math.round((s.cost / 12) * 100) / 100,
-      value_score: s.value_score,
-      category: s.category || null,
-      billing_cycle: s.billing_cycle,
-    }))
+    return computeKillZoneData(list)
   },
 
   getCategoryBreakdown: async (): Promise<CategoryBreakdown[]> => {
     const list = getStoredDemoSubscriptions()
-    const activeSubs = list.filter((s) => s.status === 'active')
-
-    const categoryMap: { [key: string]: { monthly_cost: number; count: number } } = {}
-
-    activeSubs.forEach((s) => {
-      const cat = s.category || 'Other'
-      const cost = s.billing_cycle === 'monthly' ? s.cost : s.cost / 12
-      if (!categoryMap[cat]) {
-        categoryMap[cat] = { monthly_cost: 0, count: 0 }
-      }
-      categoryMap[cat].monthly_cost += cost
-      categoryMap[cat].count += 1
-    })
-
-    return Object.entries(categoryMap).map(([category, data]) => ({
-      category,
-      monthly_cost: Math.round(data.monthly_cost * 100) / 100,
-      count: data.count,
-    }))
+    return computeCategoryBreakdown(list)
   },
 }

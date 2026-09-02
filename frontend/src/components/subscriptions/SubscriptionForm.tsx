@@ -1,12 +1,11 @@
 /**
- * Subscription Form Component - Redesigned for Better UX
- * Simple, clear platform selection with visible grid layout
+ * Subscription Form Modal - Modern Pro SaaS Design
+ * Unified workflow, quick preset chips, vector star ratings, strict zero-emoji
  */
 import React, { useState, useEffect } from 'react'
-import { FiX, FiCheck, FiSearch } from 'react-icons/fi'
+import { FiX, FiCheck, FiStar } from 'react-icons/fi'
 import type { Subscription, SubscriptionCreate, BillingCycle } from '../../types/subscription'
-import { POPULAR_PLATFORMS, CATEGORIES, Platform } from '../../data/platforms'
-import CustomSelect from '../common/CustomSelect'
+import { CATEGORIES } from '../../data/platforms'
 
 interface SubscriptionFormProps {
   subscription?: Subscription | null
@@ -14,75 +13,61 @@ interface SubscriptionFormProps {
   onCancel: () => void
 }
 
+// Popular quick preset services
+const POPULAR_PRESETS = [
+  { name: 'Netflix', cost: 15.49, cycle: 'monthly' as BillingCycle, category: 'Entertainment' },
+  { name: 'Spotify', cost: 10.99, cycle: 'monthly' as BillingCycle, category: 'Entertainment' },
+  { name: 'ChatGPT Plus', cost: 20.00, cycle: 'monthly' as BillingCycle, category: 'Productivity' },
+  { name: 'YouTube Premium', cost: 13.99, cycle: 'monthly' as BillingCycle, category: 'Entertainment' },
+  { name: 'Adobe Creative Cloud', cost: 54.99, cycle: 'monthly' as BillingCycle, category: 'Productivity' },
+  { name: 'iCloud 200GB', cost: 2.99, cycle: 'monthly' as BillingCycle, category: 'Productivity' },
+  { name: 'Amazon Prime', cost: 139.00, cycle: 'yearly' as BillingCycle, category: 'Shopping' },
+  { name: 'GitHub Pro', cost: 4.00, cycle: 'monthly' as BillingCycle, category: 'Productivity' },
+]
+
 const SubscriptionForm: React.FC<SubscriptionFormProps> = ({
   subscription,
   onSubmit,
   onCancel,
 }) => {
-  // Step 1: Platform Selection, Step 2: Details
-  const [step, setStep] = useState(subscription ? 2 : 1)
-  const [selectedPlatform, setSelectedPlatform] = useState<Platform | null>(null)
-  const [isCustom, setIsCustom] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-
-  // Form fields
   const [name, setName] = useState('')
   const [cost, setCost] = useState('')
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly')
   const [valueScore, setValueScore] = useState(3)
-  const [category, setCategory] = useState('')
-  const [emoji, setEmoji] = useState('')
+  const [category, setCategory] = useState('Entertainment')
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  // Load subscription data if editing
+  // Load subscription if editing
   useEffect(() => {
     if (subscription) {
       setName(subscription.name)
       setCost(subscription.cost.toString())
       setBillingCycle(subscription.billing_cycle)
       setValueScore(subscription.value_score)
-      setCategory(subscription.category || '')
-      setEmoji(subscription.emoji || '')
-      setIsCustom(true)
-      setStep(2)
+      setCategory(subscription.category || 'Other')
     }
   }, [subscription])
 
-  // Handle platform selection
-  const handlePlatformSelect = (platform: Platform) => {
-    setSelectedPlatform(platform)
-    setName(platform.name)
-    setCategory(platform.category)
-    setEmoji(platform.icon)
-    if (platform.suggestedPrice) {
-      setCost(platform.suggestedPrice.toString())
-    }
-    if (platform.suggestedCycle) {
-      setBillingCycle(platform.suggestedCycle)
-    }
-    setIsCustom(false)
-    setStep(2)
-  }
-
-  const handleCustom = () => {
-    setSelectedPlatform(null)
-    setIsCustom(true)
-    setName('')
-    setCost('')
-    setCategory('')
-    setEmoji('')
-    setStep(2)
+  const handleApplyPreset = (preset: typeof POPULAR_PRESETS[0]) => {
+    setName(preset.name)
+    setCost(preset.cost.toString())
+    setBillingCycle(preset.cycle)
+    setCategory(preset.category)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
 
-    // Validate cost
     const costNum = parseFloat(cost)
     if (isNaN(costNum) || costNum <= 0) {
-      setError('Cost must be a positive number')
+      setError('Cost must be a valid positive number')
+      return
+    }
+
+    if (!name.trim()) {
+      setError('Please provide a subscription name')
       return
     }
 
@@ -90,12 +75,12 @@ const SubscriptionForm: React.FC<SubscriptionFormProps> = ({
 
     try {
       await onSubmit({
-        name,
+        name: name.trim(),
         cost: costNum,
         billing_cycle: billingCycle,
         value_score: valueScore,
         category: category || undefined,
-        emoji: emoji || undefined,
+        emoji: undefined,
       })
     } catch (err: any) {
       setError(err.message || 'Failed to save subscription')
@@ -104,307 +89,225 @@ const SubscriptionForm: React.FC<SubscriptionFormProps> = ({
     }
   }
 
-  const filteredPlatforms = POPULAR_PLATFORMS.filter((p) =>
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.category.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const getValueScoreDescription = (score: number) => {
+    switch (score) {
+      case 1:
+        return 'Critical Waste — Immediate candidate for cancellation'
+      case 2:
+        return 'Poor Utility — Rarely used; questionable return on spend'
+      case 3:
+        return 'Moderate Utility — Acceptable value; review periodically'
+      case 4:
+        return 'High Utility — Frequently used and delivers consistent value'
+      case 5:
+        return 'Indispensable — Essential core tool or service'
+      default:
+        return ''
+    }
+  }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] flex flex-col">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-5 flex justify-between items-center flex-shrink-0 rounded-t-2xl">
-          <h2 className="text-2xl font-bold text-white">
-            {subscription ? 'Edit Subscription' : 'Add New Subscription'}
-          </h2>
+    <div className="fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-lg w-full max-h-[92vh] flex flex-col overflow-hidden animate-scaleIn">
+        {/* Modal Header */}
+        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-bold text-white tracking-tight">
+              {subscription ? 'Edit Subscription' : 'New Subscription'}
+            </h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Enter recurring expense details and value satisfaction score
+            </p>
+          </div>
           <button
             onClick={onCancel}
-            className="text-white/80 hover:text-white transition-colors p-1"
+            className="w-8 h-8 rounded-lg bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors"
           >
-            <FiX className="w-6 h-6" />
+            <FiX className="w-4 h-4" />
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1">
+        {/* Modal Body */}
+        <div className="p-6 overflow-y-auto space-y-5">
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
-              <p className="text-sm text-red-700 font-medium">{error}</p>
+            <div className="p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl text-xs text-rose-300 font-medium">
+              {error}
             </div>
           )}
 
-          {/* STEP 1: Platform Selection */}
-          {step === 1 && (
-            <div className="space-y-6">
-              {/* Search Bar */}
-              <div className="relative">
-                <FiSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search platforms..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg"
-                  autoFocus
-                />
+          {/* Quick Presets (only on new) */}
+          {!subscription && (
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-400 mb-2 uppercase tracking-wider">
+                Quick Presets
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {POPULAR_PRESETS.map((p) => (
+                  <button
+                    key={p.name}
+                    type="button"
+                    onClick={() => handleApplyPreset(p)}
+                    className="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-950/60 hover:bg-slate-800 border border-slate-800 text-slate-300 hover:text-white transition-colors"
+                  >
+                    {p.name}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Service Name */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                Subscription Name *
+              </label>
+              <input
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Netflix, OpenAI, Fitness Club"
+                className="w-full px-3.5 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
+              />
+            </div>
+
+            {/* Cost & Billing Cycle */}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                  Cost *
+                </label>
+                <div className="relative">
+                  <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 text-sm">
+                    $
+                  </span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    required
+                    value={cost}
+                    onChange={(e) => setCost(e.target.value)}
+                    placeholder="14.99"
+                    className="w-full pl-8 pr-3.5 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
+                  />
+                </div>
               </div>
 
-              {/* Custom Option Card */}
-              <button
-                onClick={handleCustom}
-                className="w-full p-6 bg-gradient-to-r from-orange-50 to-yellow-50 border-3 border-orange-300 rounded-xl hover:from-orange-100 hover:to-yellow-100 transition-all transform hover:scale-[1.02] active:scale-95"
-              >
-                <div className="flex items-center space-x-4">
-                  <span className="text-6xl">✏️</span>
-                  <div className="text-left">
-                    <div className="text-xl font-bold text-gray-900">Create Custom Subscription</div>
-                    <div className="text-sm text-gray-700 font-medium mt-1">Add any service not in our list</div>
-                  </div>
-                </div>
-              </button>
-
-              {/* Platform Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredPlatforms.map((platform) => (
+              <div>
+                <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                  Billing Cycle
+                </label>
+                <div className="grid grid-cols-2 p-1 bg-slate-950/60 border border-slate-800 rounded-xl">
                   <button
-                    key={platform.id}
-                    onClick={() => handlePlatformSelect(platform)}
-                    className="p-5 bg-white border-2 border-gray-200 rounded-xl hover:border-primary-500 hover:shadow-lg transition-all transform hover:scale-105 active:scale-95 text-left"
+                    type="button"
+                    onClick={() => setBillingCycle('monthly')}
+                    className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                      billingCycle === 'monthly'
+                        ? 'bg-slate-800 text-white shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
                   >
-                    <div className="flex items-start justify-between mb-3">
-                      <span className="text-5xl">{platform.icon}</span>
-                      {platform.suggestedPrice && (
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-gray-900">${platform.suggestedPrice}</div>
-                          <div className="text-xs text-gray-600 font-medium">
-                            /{platform.suggestedCycle === 'monthly' ? 'mo' : 'yr'}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <div className="font-bold text-gray-900 text-lg mb-1">{platform.name}</div>
-                    <div className="text-sm text-gray-600 font-medium">{platform.category}</div>
+                    Monthly
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setBillingCycle('yearly')}
+                    className={`py-1.5 text-xs font-semibold rounded-lg transition-all ${
+                      billingCycle === 'yearly'
+                        ? 'bg-slate-800 text-white shadow-xs'
+                        : 'text-slate-400 hover:text-slate-200'
+                    }`}
+                  >
+                    Yearly
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Category Select */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider">
+                Category
+              </label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                className="w-full px-3.5 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
+              >
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c} className="bg-slate-900 text-white">
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Value Rating Matrix */}
+            <div className="p-4 bg-slate-950/60 border border-slate-800 rounded-xl space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
+                  Utility & Satisfaction Score
+                </span>
+                <span className="text-xs font-bold text-amber-400">
+                  {valueScore} / 5 Stars
+                </span>
+              </div>
+
+              {/* Star buttons */}
+              <div className="flex items-center space-x-2 pt-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setValueScore(star)}
+                    className="p-1 text-slate-600 hover:text-amber-400 transition-transform active:scale-95"
+                  >
+                    <FiStar
+                      className={`w-6 h-6 ${
+                        star <= valueScore
+                          ? 'text-amber-400 fill-amber-400'
+                          : 'text-slate-700'
+                      }`}
+                    />
                   </button>
                 ))}
               </div>
 
-              {filteredPlatforms.length === 0 && (
-                <div className="text-center py-12">
-                  <div className="text-6xl mb-4">🔍</div>
-                  <p className="text-xl font-bold text-gray-900 mb-2">No platforms found</p>
-                  <p className="text-gray-600">Try a different search term or create a custom subscription</p>
-                </div>
-              )}
+              <p className="text-[11px] text-slate-400 font-medium">
+                {getValueScoreDescription(valueScore)}
+              </p>
             </div>
-          )}
 
-          {/* STEP 2: Subscription Details */}
-          {step === 2 && (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Show selected platform */}
-              {!subscription && (
-                <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl border-2 border-gray-200">
-                  <div className="flex items-center space-x-3">
-                    <span className="text-4xl">{selectedPlatform?.icon || emoji || '📦'}</span>
-                    <div>
-                      <div className="font-bold text-gray-900">
-                        {selectedPlatform?.name || (isCustom ? 'Custom Subscription' : 'Subscription')}
-                      </div>
-                      <div className="text-sm text-gray-600">{selectedPlatform?.category || category || 'Subscription'}</div>
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="text-sm text-primary-600 hover:text-primary-700 font-semibold"
-                  >
-                    Change
-                  </button>
-                </div>
-              )}
-
-              {/* Name Input (for custom or editing) */}
-              {(isCustom || subscription) && (
-                <div className="space-y-2">
-                  <label htmlFor="name" className="block text-sm font-semibold text-gray-700">
-                    Subscription Name *
-                  </label>
-                  <input
-                    id="name"
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg"
-                    placeholder="e.g., Netflix, Spotify, Custom Service"
-                  />
-                </div>
-              )}
-
-              {/* Cost and Billing */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label htmlFor="cost" className="block text-sm font-semibold text-gray-700">
-                    Cost * 💵
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-4 text-gray-500 font-medium">$</span>
-                    <input
-                      id="cost"
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      required
-                      value={cost}
-                      onChange={(e) => setCost(e.target.value)}
-                      className="w-full pl-8 pr-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg"
-                      placeholder="9.99"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <CustomSelect
-                    label="Billing Cycle 📅"
-                    value={billingCycle}
-                    onChange={(value) => setBillingCycle(value as BillingCycle)}
-                    options={[
-                      { value: 'monthly', label: 'Monthly' },
-                      { value: 'yearly', label: 'Yearly' },
-                    ]}
-                    required
-                  />
-                </div>
-              </div>
-
-              {/* Category */}
-              <CustomSelect
-                label="Category 🏷️"
-                value={category}
-                onChange={setCategory}
-                options={[
-                  { value: '', label: 'Select a category' },
-                  ...CATEGORIES.map(cat => ({ value: cat, label: cat }))
-                ]}
-                placeholder="Select a category"
-              />
-
-              {/* Custom Emoji */}
-              {(isCustom || subscription) && (
-                <div className="space-y-2">
-                  <label htmlFor="emoji" className="block text-sm font-semibold text-gray-700">
-                    Custom Icon (Emoji) 😊
-                  </label>
-                  <div className="flex items-center space-x-3">
-                    <input
-                      id="emoji"
-                      type="text"
-                      maxLength={2}
-                      value={emoji}
-                      onChange={(e) => setEmoji(e.target.value)}
-                      placeholder="Pick one"
-                      className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-center text-4xl"
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    {['💰', '🎮', '📺', '🎵', '☁️', '📱', '🍕', '🏋️', '📚', '🎨', '✈️', '🎬'].map((e) => (
-                      <button
-                        key={e}
-                        type="button"
-                        onClick={() => setEmoji(e)}
-                        className={`px-3 py-2 text-3xl rounded-lg border-2 hover:border-primary-500 transition-all ${
-                          emoji === e ? 'border-primary-500 bg-primary-50' : 'border-gray-300 bg-white'
-                        }`}
-                      >
-                        {e}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Value Score - Star Rating */}
-              <div className="space-y-3">
-                <label className="block text-sm font-semibold text-gray-700">
-                  How valuable is this subscription? ⭐
-                </label>
-                <div className="bg-gradient-to-br from-yellow-50 via-orange-50 to-yellow-100 border-3 border-yellow-400 rounded-xl p-5 shadow-lg">
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setValueScore(star)}
-                        className="group relative transition-all duration-200 hover:scale-110 active:scale-95 focus:outline-none"
-                      >
-                        {star <= valueScore ? (
-                          <span className="text-4xl block relative" style={{
-                            filter: 'drop-shadow(0 2px 6px rgba(234, 179, 8, 0.6))',
-                          }}>
-                            ⭐
-                          </span>
-                        ) : (
-                          <span className="text-4xl block text-gray-300 group-hover:text-gray-400 transition-colors">
-                            ☆
-                          </span>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="text-center bg-white/70 backdrop-blur-sm rounded-lg p-3 border border-yellow-300">
-                    <div className="text-lg font-bold text-gray-900 mb-1">
-                      {valueScore} out of 5 Stars
-                    </div>
-                    <div className="text-sm font-semibold" style={{
-                      color: valueScore <= 2 ? '#dc2626' : valueScore === 3 ? '#f59e0b' : '#16a34a'
-                    }}>
-                      {valueScore === 1 && '😞 Not worth it at all'}
-                      {valueScore === 2 && '😕 Barely worth it'}
-                      {valueScore === 3 && '😐 It\'s okay'}
-                      {valueScore === 4 && '😊 Really valuable'}
-                      {valueScore === 5 && '🤩 Absolutely essential!'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex space-x-3 pt-4">
-                {!subscription && (
-                  <button
-                    type="button"
-                    onClick={() => setStep(1)}
-                    className="px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
-                  >
-                    ← Back
-                  </button>
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-3 pt-2">
+              <button
+                type="button"
+                onClick={onCancel}
+                className="flex-1 py-2.5 px-4 bg-slate-800 hover:bg-slate-700/80 text-slate-300 rounded-xl text-xs font-semibold tracking-wide transition-colors border border-slate-700"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex-1 py-2.5 px-4 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold tracking-wide shadow-sm hover:shadow-rose-500/20 transition-all flex items-center justify-center space-x-1.5 disabled:opacity-50"
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <FiCheck className="w-4 h-4 shrink-0" />
+                    <span>{subscription ? 'Update Subscription' : 'Create Subscription'}</span>
+                  </>
                 )}
-                <button
-                  type="button"
-                  onClick={onCancel}
-                  className="flex-1 px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex-1 px-6 py-3 text-sm font-semibold text-white bg-gradient-to-r from-primary-600 to-primary-700 rounded-xl hover:from-primary-700 hover:to-primary-800 disabled:from-gray-400 disabled:to-gray-400 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <>
-                      <FiCheck className="w-5 h-5" />
-                      <span>{subscription ? 'Update Subscription' : 'Add Subscription'}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          )}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

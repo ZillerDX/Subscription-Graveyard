@@ -1,9 +1,10 @@
 /**
- * Register Page Component - Modern Redesign
+ * Modern SaaS Register Page
+ * Supports instant client-side account creation and validation
  */
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FiMail, FiLock, FiArrowRight, FiCheckCircle, FiPlay } from 'react-icons/fi'
+import { FiMail, FiLock, FiArrowRight, FiPlay, FiActivity, FiEye, FiEyeOff, FiAlertCircle, FiCheck } from 'react-icons/fi'
 import { useAuth } from '../context/AuthContext'
 
 const RegisterPage: React.FC = () => {
@@ -11,6 +12,7 @@ const RegisterPage: React.FC = () => {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -18,15 +20,13 @@ const RegisterPage: React.FC = () => {
     e.preventDefault()
     setError('')
 
-    // Validate passwords match
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      setError('Passwords do not match. Please re-enter.')
       return
     }
 
-    // Validate password length
-    if (password.length < 8) {
-      setError('Password must be at least 8 characters')
+    if (password.length < 6) {
+      setError('Password must be at least 6 characters.')
       return
     }
 
@@ -44,104 +44,124 @@ const RegisterPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <div className="text-lg font-semibold text-gray-800">Loading...</div>
+        <div className="flex items-center space-x-3 text-slate-400 text-sm">
+          <div className="w-5 h-5 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
+          <span>Verifying session...</span>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-md mx-auto animate-slideUp">
-      {/* Logo and Branding */}
+    <div className="max-w-md mx-auto pt-4 pb-12 animate-slideUp">
+      {/* Brand Header */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-red-500 via-orange-500 to-yellow-500 rounded-3xl shadow-2xl mb-4 animate-float">
-          <span className="text-5xl">💸</span>
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/20 text-rose-500 mb-4 shadow-sm">
+          <FiActivity className="w-6 h-6 shrink-0" />
         </div>
-        <h1 className="text-3xl font-extrabold text-gray-900 mb-2 drop-shadow-sm">
-          Subscription Graveyard
+        <h1 className="text-2xl font-bold tracking-tight text-white">
+          Create Account
         </h1>
-        <p className="text-base text-gray-800 font-bold">Kill Your Zombie Subs</p>
+        <p className="text-sm text-slate-400 mt-1 font-medium">
+          Start tracking and eliminating recurring subscription waste
+        </p>
       </div>
 
-      <div className="bg-white shadow-2xl rounded-3xl p-10 border-2 border-gray-300">
-        <h2 className="text-3xl font-bold text-center text-gray-900 mb-3">
-          Create Account 🚀
-        </h2>
-        <p className="text-center text-gray-800 mb-8 font-semibold">
-          Start tracking your subscriptions today
-        </p>
+      {/* Form Card */}
+      <div className="bg-slate-900/70 border border-slate-800/90 rounded-2xl p-7 sm:p-8 backdrop-blur-xl shadow-2xl">
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-white tracking-tight">Get Started</h2>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Your data is isolated and safely saved in your browser
+          </p>
+        </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-100 border-2 border-red-400 rounded-xl animate-shake">
-            <p className="text-sm text-red-900 font-bold">{error}</p>
+          <div className="mb-5 p-3 bg-rose-500/10 border border-rose-500/30 rounded-xl flex items-start space-x-2.5 animate-fadeIn">
+            <FiAlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-rose-300 font-medium leading-relaxed">{error}</p>
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="email" className="block text-sm font-extrabold text-gray-900 mb-2 uppercase tracking-wide">
+            <label
+              htmlFor="reg-email"
+              className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider"
+            >
               Email Address
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <FiMail className="h-5 w-5 text-gray-600" />
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                <FiMail className="w-4 h-4" />
               </div>
               <input
-                id="email"
+                id="reg-email"
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="block w-full pl-12 pr-4 py-4 bg-white border-2 border-gray-400 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-primary-300 focus:border-primary-500 text-base font-semibold text-gray-900 placeholder-gray-500 transition-all hover:border-gray-500"
-                placeholder="you@example.com"
-                style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                className="block w-full pl-10 pr-3.5 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
+                placeholder="name@example.com"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-extrabold text-gray-900 mb-2 uppercase tracking-wide">
+            <label
+              htmlFor="reg-password"
+              className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider"
+            >
               Password
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <FiLock className="h-5 w-5 text-gray-600" />
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                <FiLock className="w-4 h-4" />
               </div>
               <input
-                id="password"
-                type="password"
+                id="reg-password"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="block w-full pl-12 pr-4 py-4 bg-white border-2 border-gray-400 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-primary-300 focus:border-primary-500 text-base font-semibold text-gray-900 placeholder-gray-500 transition-all hover:border-gray-500"
+                className="block w-full pl-10 pr-10 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
                 placeholder="••••••••"
-                minLength={8}
-                style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                minLength={6}
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300 transition-colors"
+              >
+                {showPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+              </button>
             </div>
-            <p className="mt-2 text-xs text-gray-800 font-bold flex items-center space-x-1">
-              <FiCheckCircle className="w-4 h-4 text-zombie-600" />
-              <span>Must be at least 8 characters</span>
+            <p className="mt-1.5 text-[11px] text-slate-400 flex items-center space-x-1">
+              <FiCheck className="w-3 h-3 text-emerald-400 shrink-0" />
+              <span>Minimum 6 characters</span>
             </p>
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-extrabold text-gray-900 mb-2 uppercase tracking-wide">
+            <label
+              htmlFor="reg-confirm"
+              className="block text-xs font-semibold text-slate-300 mb-1.5 uppercase tracking-wider"
+            >
               Confirm Password
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <FiLock className="h-5 w-5 text-gray-600" />
+              <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                <FiLock className="w-4 h-4" />
               </div>
               <input
-                id="confirmPassword"
-                type="password"
+                id="reg-confirm"
+                type={showPassword ? 'text' : 'password'}
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="block w-full pl-12 pr-4 py-4 bg-white border-2 border-gray-400 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-primary-300 focus:border-primary-500 text-base font-semibold text-gray-900 placeholder-gray-500 transition-all hover:border-gray-500"
+                className="block w-full pl-10 pr-3.5 py-2.5 bg-slate-950/60 border border-slate-800 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-rose-500 focus:ring-1 focus:ring-rose-500 transition-colors"
                 placeholder="••••••••"
-                minLength={8}
-                style={{ backgroundColor: '#ffffff', color: '#111827' }}
+                minLength={6}
               />
             </div>
           </div>
@@ -149,44 +169,47 @@ const RegisterPage: React.FC = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full flex items-center justify-center space-x-2 py-4 px-6 mt-6 border border-transparent rounded-xl shadow-lg text-base font-bold text-white bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 hover:from-primary-700 hover:via-primary-800 hover:to-primary-900 focus:outline-none focus:ring-4 focus:ring-primary-300 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 hover:shadow-2xl active:scale-95"
+            className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 mt-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-sm font-semibold tracking-wide shadow-sm hover:shadow-rose-500/20 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
           >
             {isSubmitting ? (
               <>
-                <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 <span>Creating account...</span>
               </>
             ) : (
               <>
                 <span>Create Account</span>
-                <FiArrowRight className="w-5 h-5" />
+                <FiArrowRight className="w-4 h-4 shrink-0" />
               </>
             )}
           </button>
 
-          <div className="relative my-6 flex items-center justify-center">
+          <div className="relative my-5 flex items-center justify-center">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200" />
+              <div className="w-full border-t border-slate-800" />
             </div>
-            <div className="relative bg-white px-3 text-xs font-bold uppercase tracking-wider text-gray-500">
-              Or explore instantly
+            <div className="relative bg-slate-900 px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              Or Instant Access
             </div>
           </div>
 
           <button
             type="button"
             onClick={loginAsDemo}
-            className="w-full flex items-center justify-center space-x-2 py-3.5 px-6 border-2 border-emerald-500/30 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-500/60 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+            className="w-full flex items-center justify-center space-x-2 py-2.5 px-4 border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-400 rounded-xl text-xs font-semibold tracking-wide transition-all duration-150 cursor-pointer"
           >
-            <FiPlay className="w-4 h-4 shrink-0 text-emerald-700" />
-            <span>Try Interactive Demo (No Backend Required)</span>
+            <FiPlay className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+            <span>Launch Interactive Demo (Preloaded Data)</span>
           </button>
         </form>
 
-        <div className="mt-8 text-center">
-          <p className="text-base text-gray-800 font-bold">
+        <div className="mt-6 pt-5 border-t border-slate-800/80 text-center">
+          <p className="text-xs text-slate-400">
             Already have an account?{' '}
-            <Link to="/login" className="font-extrabold text-primary-600 hover:text-primary-800 underline decoration-2 underline-offset-2 transition-colors">
+            <Link
+              to="/login"
+              className="font-semibold text-rose-400 hover:text-rose-300 transition-colors"
+            >
               Sign in here
             </Link>
           </p>

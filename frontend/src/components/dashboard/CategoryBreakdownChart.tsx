@@ -1,18 +1,9 @@
 /**
- * Category Breakdown Chart Component
- * Bar chart showing spending by category
+ * Category Breakdown Component - Modern Pro SaaS Design
+ * Clear horizontal distribution bars, percentage share, zero emojis
  */
 import React from 'react'
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  Cell,
-} from 'recharts'
+import { FiPieChart, FiFolder } from 'react-icons/fi'
 import type { CategoryBreakdown } from '../../services/dashboardService'
 
 interface CategoryBreakdownChartProps {
@@ -26,9 +17,12 @@ const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <div className="h-96 flex items-center justify-center">
-          <div className="text-gray-500">Loading chart...</div>
+      <div className="bg-slate-900/70 border border-slate-800/90 rounded-2xl p-6 backdrop-blur-sm">
+        <div className="h-64 flex items-center justify-center text-slate-500 text-sm">
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+            <span>Loading categories...</span>
+          </div>
         </div>
       </div>
     )
@@ -36,155 +30,127 @@ const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
 
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Spending by Category</h3>
-        <div className="h-96 flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-6xl mb-4">📊</div>
-            <p className="text-gray-600">No category data to display</p>
-            <p className="text-sm text-gray-500 mt-2">
-              Add categories to your subscriptions to see breakdown
-            </p>
-          </div>
+      <div className="bg-slate-900/70 border border-slate-800/90 rounded-2xl p-8 text-center">
+        <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 mx-auto flex items-center justify-center text-slate-400 mb-3">
+          <FiFolder className="w-6 h-6" />
         </div>
+        <h3 className="text-base font-semibold text-white">No category data</h3>
+        <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+          Add subscriptions with categories to view spending distribution.
+        </p>
       </div>
     )
   }
 
-  // Color palette for categories
+  // Refined modern colors for categories
   const COLORS = [
-    '#3b82f6', // Blue
-    '#10b981', // Green
-    '#f59e0b', // Orange
-    '#ef4444', // Red
-    '#8b5cf6', // Purple
+    '#6366f1', // Indigo
+    '#f43f5e', // Rose
+    '#10b981', // Emerald
+    '#f59e0b', // Amber
+    '#38bdf8', // Sky
+    '#a855f7', // Purple
     '#ec4899', // Pink
-    '#06b6d4', // Cyan
-    '#84cc16', // Lime
+    '#14b8a6', // Teal
   ]
 
-  // Custom tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const data = payload[0].payload
-      return (
-        <div className="bg-white border-2 border-gray-300 rounded-lg shadow-lg p-3">
-          <p className="font-bold text-gray-900 mb-1">{data.category}</p>
-          <p className="text-sm text-gray-600">
-            Monthly: <span className="font-semibold">${data.monthly_cost.toFixed(2)}</span>
-          </p>
-          <p className="text-sm text-gray-600">
-            Count: <span className="font-semibold">{data.count} subscription{data.count !== 1 ? 's' : ''}</span>
-          </p>
-          <p className="text-sm text-gray-600">
-            Yearly: <span className="font-semibold">${(data.monthly_cost * 12).toFixed(2)}</span>
-          </p>
-        </div>
-      )
-    }
-    return null
-  }
+  const totalMonthly = data.reduce((sum, item) => sum + item.monthly_cost, 0)
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <div className="mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Spending by Category</h3>
-        <p className="text-sm text-gray-600 mt-1">
-          Monthly spending breakdown across all categories
-        </p>
+    <div className="bg-slate-900/70 border border-slate-800/90 rounded-2xl p-6 backdrop-blur-sm shadow-xl">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <div className="flex items-center space-x-2">
+            <div className="w-6 h-6 rounded-md bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
+              <FiPieChart className="w-3.5 h-3.5" />
+            </div>
+            <h3 className="text-base font-bold text-white tracking-tight">
+              Spending by Category
+            </h3>
+          </div>
+          <p className="text-xs text-slate-400 mt-1">
+            Percentage share and monthly run rate across all expense categories
+          </p>
+        </div>
+
+        <div className="text-right">
+          <span className="text-xs text-slate-400 block uppercase">Total Burn</span>
+          <span className="text-base font-bold text-white">${totalMonthly.toFixed(2)}/mo</span>
+        </div>
       </div>
 
-      <ResponsiveContainer width="100%" height={400}>
-        <BarChart
-          data={data}
-          margin={{ top: 20, right: 20, bottom: 60, left: 60 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+      {/* Category Progress Bars */}
+      <div className="space-y-3.5 mb-6">
+        {data.map((item, index) => {
+          const color = COLORS[index % COLORS.length]
+          return (
+            <div key={item.category} className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center space-x-2">
+                  <div
+                    className="w-2.5 h-2.5 rounded-sm shrink-0"
+                    style={{ backgroundColor: color }}
+                  />
+                  <span className="font-semibold text-slate-200">{item.category}</span>
+                  <span className="text-slate-500 text-[11px]">
+                    ({item.count} sub{item.count !== 1 ? 's' : ''})
+                  </span>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <span className="text-slate-400 font-medium">{item.percentage}%</span>
+                  <span className="font-bold text-white">${item.monthly_cost.toFixed(2)}/mo</span>
+                </div>
+              </div>
 
-          <XAxis
-            dataKey="category"
-            angle={-45}
-            textAnchor="end"
-            height={100}
-            interval={0}
-            stroke="#6b7280"
-            style={{ fontSize: 12 }}
-          />
+              {/* Bar track */}
+              <div className="w-full bg-slate-800/80 rounded-full h-2 overflow-hidden">
+                <div
+                  className="h-full rounded-full transition-all duration-500"
+                  style={{
+                    width: `${Math.max(item.percentage, 3)}%`,
+                    backgroundColor: color,
+                  }}
+                />
+              </div>
+            </div>
+          )
+        })}
+      </div>
 
-          <YAxis
-            stroke="#6b7280"
-            label={{
-              value: 'Monthly Cost ($)',
-              angle: -90,
-              position: 'insideLeft',
-              style: { fontSize: 14, fill: '#374151', fontWeight: 600 },
-            }}
-          />
-
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }} />
-
-          <Bar dataKey="monthly_cost" radius={[8, 8, 0, 0]}>
-            {data.map((_, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-            ))}
-          </Bar>
-        </BarChart>
-      </ResponsiveContainer>
-
-      {/* Summary Table */}
-      <div className="mt-6 overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Category
-              </th>
-              <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Monthly
-              </th>
-              <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Yearly
-              </th>
-              <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Count
-              </th>
+      {/* Structured Category Table */}
+      <div className="overflow-x-auto pt-2 border-t border-slate-800/80">
+        <table className="min-w-full divide-y divide-slate-800 text-xs">
+          <thead>
+            <tr className="text-slate-400 uppercase tracking-wider text-[10px]">
+              <th className="py-2.5 text-left font-semibold">Category</th>
+              <th className="py-2.5 text-right font-semibold">Monthly</th>
+              <th className="py-2.5 text-right font-semibold">Projected Annual</th>
+              <th className="py-2.5 text-right font-semibold">Share</th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="divide-y divide-slate-800/50">
             {data.map((item, index) => (
-              <tr key={index} className="hover:bg-gray-50">
-                <td className="px-4 py-2 whitespace-nowrap">
-                  <div className="flex items-center">
+              <tr key={index} className="hover:bg-slate-800/30 transition-colors">
+                <td className="py-2.5 font-medium text-slate-300">
+                  <div className="flex items-center space-x-2">
                     <div
-                      className="w-3 h-3 rounded-full mr-2"
+                      className="w-2 h-2 rounded-full shrink-0"
                       style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                    ></div>
-                    <span className="text-sm font-medium text-gray-900">{item.category}</span>
+                    />
+                    <span>{item.category}</span>
                   </div>
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-right text-sm text-gray-900">
+                <td className="py-2.5 text-right font-semibold text-white">
                   ${item.monthly_cost.toFixed(2)}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-right text-sm text-gray-600">
-                  ${(item.monthly_cost * 12).toFixed(2)}
+                <td className="py-2.5 text-right text-slate-400">
+                  ${item.yearly_cost.toFixed(2)}
                 </td>
-                <td className="px-4 py-2 whitespace-nowrap text-right text-sm text-gray-600">
-                  {item.count}
+                <td className="py-2.5 text-right font-medium text-slate-300">
+                  {item.percentage}%
                 </td>
               </tr>
             ))}
-            <tr className="bg-gray-50 font-semibold">
-              <td className="px-4 py-2 text-sm text-gray-900">Total</td>
-              <td className="px-4 py-2 text-right text-sm text-gray-900">
-                ${data.reduce((sum, item) => sum + item.monthly_cost, 0).toFixed(2)}
-              </td>
-              <td className="px-4 py-2 text-right text-sm text-gray-900">
-                ${(data.reduce((sum, item) => sum + item.monthly_cost, 0) * 12).toFixed(2)}
-              </td>
-              <td className="px-4 py-2 text-right text-sm text-gray-900">
-                {data.reduce((sum, item) => sum + item.count, 0)}
-              </td>
-            </tr>
           </tbody>
         </table>
       </div>

@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, Link, useLocation } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
-import { FiHome, FiList, FiLogOut, FiUser } from 'react-icons/fi'
+import { FiHome, FiList, FiLogOut, FiUser, FiActivity } from 'react-icons/fi'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import ProtectedRoute from './components/common/ProtectedRoute'
 import LoginPage from './pages/LoginPage'
@@ -14,28 +14,27 @@ function App() {
       <Toaster
         position="top-right"
         toastOptions={{
-          duration: 4000,
+          duration: 3500,
           style: {
-            background: '#1f2937',
-            color: '#fff',
-            borderRadius: '12px',
-            padding: '16px',
-            fontSize: '14px',
+            background: '#0f172a',
+            color: '#f8fafc',
+            border: '1px solid #1e293b',
+            borderRadius: '10px',
+            padding: '12px 16px',
+            fontSize: '13px',
             fontWeight: '500',
-            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.3)',
+            boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5)',
           },
           success: {
-            duration: 3000,
             iconTheme: {
               primary: '#10b981',
-              secondary: '#fff',
+              secondary: '#0f172a',
             },
           },
           error: {
-            duration: 5000,
             iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
+              primary: '#f43f5e',
+              secondary: '#0f172a',
             },
           },
         }}
@@ -52,55 +51,59 @@ function AppContent() {
   const isAuthPage = ['/login', '/register'].includes(location.pathname)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 flex flex-col relative overflow-hidden">
-      {/* Animated background pattern */}
-      <div className="absolute inset-0 opacity-30 pointer-events-none">
-        <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl animate-float"></div>
-        <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl animate-float animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl animate-float animation-delay-4000"></div>
+    <div className="min-h-screen bg-[#090D16] text-slate-100 flex flex-col relative font-sans antialiased selection:bg-rose-500/20 selection:text-rose-200">
+      {/* Subtle ambient light accents */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute top-[-10%] left-[20%] w-[500px] h-[350px] bg-rose-900/10 rounded-full blur-[140px]" />
+        <div className="absolute top-[20%] right-[10%] w-[450px] h-[400px] bg-indigo-900/10 rounded-full blur-[160px]" />
       </div>
 
       {/* Navigation Bar */}
       {!isAuthPage && (
-        <header className="glass sticky top-0 z-40 border-b border-white/20 shadow-xl animate-slideDown">
+        <header className="sticky top-0 z-40 bg-[#090D16]/85 backdrop-blur-md border-b border-slate-800/80 transition-colors">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
-              {/* Logo */}
-              <div className="flex items-center space-x-3 animate-slideInLeft">
-                <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-br from-red-500 via-orange-500 to-yellow-500 rounded-xl shadow-lg hover:shadow-2xl transform hover:scale-110 hover:rotate-6 transition-all duration-300">
-                  <span className="text-2xl">💸</span>
+              {/* Brand Logo */}
+              <Link to="/" className="flex items-center space-x-3 group">
+                <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-500 shadow-sm group-hover:border-rose-500/40 group-hover:bg-rose-500/20 transition-all duration-200">
+                  <FiActivity className="w-5 h-5 shrink-0" />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
-                    Subscription Graveyard
-                  </h1>
-                  <p className="text-xs font-bold bg-gradient-to-r from-death-600 to-death-500 bg-clip-text text-transparent">Kill Your Zombie Subs</p>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-base font-bold tracking-tight text-white group-hover:text-rose-100 transition-colors">
+                      Subscription Graveyard
+                    </span>
+                    <span className="text-[10px] font-semibold tracking-wide uppercase px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 border border-slate-700/60">
+                      PRO
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 font-medium">Kill zombie subscriptions</p>
                 </div>
-              </div>
+              </Link>
 
               {/* Navigation Links */}
               {isAuthenticated && (
-                <nav className="flex items-center space-x-2 animate-fadeIn">
+                <nav className="flex items-center space-x-1 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
                   <Link
                     to="/"
-                    className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all duration-150 ${
                       location.pathname === '/'
-                        ? 'bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700 text-white shadow-lg shadow-primary-500/40 transform scale-105'
-                        : 'text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-md hover:scale-105'
+                        ? 'bg-slate-800 text-white shadow-xs border border-slate-700/60'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                     }`}
                   >
-                    <FiHome className="w-4 h-4" />
+                    <FiHome className="w-3.5 h-3.5 shrink-0" />
                     <span>Dashboard</span>
                   </Link>
                   <Link
                     to="/subscriptions"
-                    className={`flex items-center space-x-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+                    className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-xs font-semibold tracking-wide transition-all duration-150 ${
                       location.pathname === '/subscriptions'
-                        ? 'bg-gradient-to-r from-primary-500 via-primary-600 to-primary-700 text-white shadow-lg shadow-primary-500/40 transform scale-105'
-                        : 'text-gray-700 hover:text-gray-900 hover:bg-white/60 hover:shadow-md hover:scale-105'
+                        ? 'bg-slate-800 text-white shadow-xs border border-slate-700/60'
+                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
                     }`}
                   >
-                    <FiList className="w-4 h-4" />
+                    <FiList className="w-3.5 h-3.5 shrink-0" />
                     <span>Subscriptions</span>
                   </Link>
                 </nav>
@@ -108,26 +111,27 @@ function AppContent() {
 
               {/* User Menu */}
               {isAuthenticated && (
-                <div className="flex items-center space-x-3 animate-slideInRight">
+                <div className="flex items-center space-x-2.5">
                   {isDemo && (
-                    <span className="hidden sm:inline-flex items-center px-2.5 py-1 text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 rounded-lg shadow-xs">
+                    <span className="hidden sm:inline-flex items-center px-2 py-0.5 text-[11px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-md tracking-wide">
                       Live Demo
                     </span>
                   )}
-                  <div className="flex items-center space-x-2 px-3 py-2 bg-white/60 backdrop-blur-sm rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
-                    <div className="w-8 h-8 bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-md">
-                      <FiUser className="w-4 h-4 text-white" />
+                  <div className="flex items-center space-x-2 px-2.5 py-1.5 bg-slate-900/80 border border-slate-800 rounded-lg text-xs">
+                    <div className="w-6 h-6 rounded-md bg-slate-800 flex items-center justify-center text-slate-300">
+                      <FiUser className="w-3.5 h-3.5 shrink-0" />
                     </div>
-                    <span className="text-sm font-bold text-gray-900 max-w-[150px] truncate">
+                    <span className="text-slate-300 font-medium max-w-[140px] truncate">
                       {user?.email}
                     </span>
                   </div>
                   <button
                     onClick={logout}
-                    className="flex items-center space-x-2 px-4 py-2.5 text-sm font-bold text-gray-700 bg-white/60 backdrop-blur-sm border-2 border-gray-200 rounded-xl hover:bg-death-50 hover:border-death-300 hover:text-death-700 hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+                    title="Sign Out"
+                    className="flex items-center space-x-1.5 px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-rose-400 bg-slate-900/50 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/30 rounded-lg transition-all duration-150"
                   >
-                    <FiLogOut className="w-4 h-4" />
-                    <span>Logout</span>
+                    <FiLogOut className="w-3.5 h-3.5 shrink-0" />
+                    <span className="hidden sm:inline">Sign Out</span>
                   </button>
                 </div>
               )}
@@ -136,7 +140,7 @@ function AppContent() {
         </header>
       )}
 
-      {/* Main Content */}
+      {/* Main Content Viewport */}
       <main className="flex-1 max-w-7xl w-full mx-auto py-8 px-4 sm:px-6 lg:px-8 relative z-10">
         <Routes>
           <Route
@@ -163,15 +167,17 @@ function AppContent() {
 
       {/* Footer */}
       {!isAuthPage && (
-        <footer className="mt-auto glass border-t border-white/20 relative z-10">
-          <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-            <div className="flex flex-col items-center space-y-2">
-              <p className="text-sm font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
-                💀 Subscription Graveyard
-              </p>
-              <p className="text-xs font-semibold text-gray-600">
-                Track • Analyze • Kill Your Subscriptions
-              </p>
+        <footer className="mt-auto border-t border-slate-800/80 bg-[#090D16] py-6 relative z-10 text-xs text-slate-500">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="flex items-center space-x-2">
+              <div className="w-4 h-4 rounded bg-rose-500/20 text-rose-400 flex items-center justify-center">
+                <FiActivity className="w-2.5 h-2.5 shrink-0" />
+              </div>
+              <span className="font-semibold text-slate-400">Subscription Graveyard</span>
+              <span>— Kill wasteful recurring expenses</span>
+            </div>
+            <div className="text-slate-500">
+              Clean, local-first analytics & Kill Zone intelligence
             </div>
           </div>
         </footer>
