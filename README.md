@@ -1,5 +1,11 @@
 # 💸 Subscription Graveyard
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-brightgreen?style=for-the-badge&logo=github)](https://zillerdx.github.io/Subscription-Graveyard/)
+[![GitHub Actions](https://img.shields.io/badge/Deployment-GitHub%20Pages%20Actions-blue?style=for-the-badge&logo=githubactions)](https://github.com/ZillerDX/Subscription-Graveyard/actions)
+
+> 🌐 **Live Demo:** [https://zillerdx.github.io/Subscription-Graveyard/](https://zillerdx.github.io/Subscription-Graveyard/)  
+> *(เปิดทดลองใช้งานได้ทันที มี **Interactive Demo Mode** ให้ทดสอบฟีเจอร์ Dashboard, Kill Zone Chart, และการจัดการ Subscriptions ในตัว)*
+
 A modern web application to track, analyze, and manage your recurring subscriptions. Kill the zombie subscriptions that drain your wallet!
 
 ## 📖 About

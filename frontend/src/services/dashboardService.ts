@@ -3,6 +3,7 @@
  * API calls for dashboard statistics and analytics
  */
 import { apiClient } from './api'
+import { isDemoMode, demoDashboardService } from './demoStorage'
 
 export interface DashboardStats {
   monthly_burn: number
@@ -31,6 +32,10 @@ export const dashboardService = {
    * Get dashboard statistics
    */
   getStats: async (): Promise<DashboardStats> => {
+    if (isDemoMode()) {
+      return demoDashboardService.getStats()
+    }
+
     const response = await apiClient.get<DashboardStats>('/dashboard/stats')
     return response.data
   },
@@ -39,6 +44,10 @@ export const dashboardService = {
    * Get Kill Zone scatter plot data
    */
   getKillZoneData: async (): Promise<KillZoneDataPoint[]> => {
+    if (isDemoMode()) {
+      return demoDashboardService.getKillZoneData()
+    }
+
     const response = await apiClient.get<KillZoneDataPoint[]>('/dashboard/kill-zone')
     return response.data
   },
@@ -47,6 +56,10 @@ export const dashboardService = {
    * Get category spending breakdown
    */
   getCategoryBreakdown: async (): Promise<CategoryBreakdown[]> => {
+    if (isDemoMode()) {
+      return demoDashboardService.getCategoryBreakdown()
+    }
+
     const response = await apiClient.get<CategoryBreakdown[]>('/dashboard/category-breakdown')
     return response.data
   },

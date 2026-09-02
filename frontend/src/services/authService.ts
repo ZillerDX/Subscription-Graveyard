@@ -3,6 +3,7 @@
  */
 import { apiClient } from './api'
 import type { LoginCredentials, RegisterCredentials, AuthToken, User } from '../types/auth'
+import { isDemoMode, DEMO_USER } from './demoStorage'
 
 export const authService = {
   /**
@@ -25,6 +26,9 @@ export const authService = {
    * Get current user info
    */
   me: async (): Promise<User> => {
+    if (isDemoMode()) {
+      return DEMO_USER
+    }
     const response = await apiClient.get<User>('/auth/me')
     return response.data
   },

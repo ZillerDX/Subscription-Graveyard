@@ -3,11 +3,11 @@
  */
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { FiMail, FiLock, FiArrowRight } from 'react-icons/fi'
+import { FiMail, FiLock, FiArrowRight, FiPlay } from 'react-icons/fi'
 import { useAuth } from '../context/AuthContext'
 
 const LoginPage: React.FC = () => {
-  const { login, isLoading } = useAuth()
+  const { login, loginAsDemo, isLoading } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -122,6 +122,24 @@ const LoginPage: React.FC = () => {
                 <FiArrowRight className="w-5 h-5" />
               </>
             )}
+          </button>
+
+          <div className="relative my-6 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200" />
+            </div>
+            <div className="relative bg-white px-3 text-xs font-bold uppercase tracking-wider text-gray-500">
+              Or explore instantly
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={loginAsDemo}
+            className="w-full flex items-center justify-center space-x-2 py-3.5 px-6 border-2 border-emerald-500/30 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 hover:border-emerald-500/60 rounded-xl text-sm font-bold shadow-sm transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
+          >
+            <FiPlay className="w-4 h-4 shrink-0 text-emerald-700" />
+            <span>Try Interactive Demo (No Backend Required)</span>
           </button>
         </form>
 

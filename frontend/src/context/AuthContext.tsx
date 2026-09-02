@@ -90,6 +90,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }
 
   /**
+   * Login as demo user (interactive mock mode)
+   */
+  const loginAsDemo = () => {
+    localStorage.setItem('token', 'demo_token')
+    setToken('demo_token')
+    setUser({
+      id: 'demo-user-123',
+      email: 'demo@subscription-graveyard.dev',
+      created_at: new Date().toISOString(),
+    })
+    toast.success('Welcome to Subscription Graveyard Demo! 🚀')
+    navigate('/')
+  }
+
+  /**
    * Logout user
    */
   const logout = () => {
@@ -105,8 +120,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     token,
     isAuthenticated: !!user,
     isLoading,
+    isDemo: token === 'demo_token',
     login,
     register,
+    loginAsDemo,
     logout,
   }
 

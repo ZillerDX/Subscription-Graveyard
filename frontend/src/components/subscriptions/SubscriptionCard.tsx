@@ -22,7 +22,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   onReactivate,
   onDelete,
 }) => {
-  const cost = typeof subscription.cost === 'number' ? subscription.cost : parseFloat(subscription.cost.toString())
+  const cost = typeof subscription.cost === 'number' ? subscription.cost : parseFloat(String(subscription.cost)) || 0
   const monthlyCost =
     subscription.billing_cycle === 'monthly'
       ? cost

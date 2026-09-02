@@ -12,7 +12,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-  Legend,
 } from 'recharts'
 import type { CategoryBreakdown } from '../../services/dashboardService'
 
@@ -125,7 +124,7 @@ const CategoryBreakdownChart: React.FC<CategoryBreakdownChartProps> = ({
           <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(59, 130, 246, 0.1)' }} />
 
           <Bar dataKey="monthly_cost" radius={[8, 8, 0, 0]}>
-            {data.map((entry, index) => (
+            {data.map((_, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Bar>

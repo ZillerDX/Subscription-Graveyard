@@ -46,7 +46,7 @@ function App() {
 }
 
 function AppContent() {
-  const { isAuthenticated, user, logout } = useAuth()
+  const { isAuthenticated, user, isDemo, logout } = useAuth()
   const location = useLocation()
 
   const isAuthPage = ['/login', '/register'].includes(location.pathname)
@@ -109,6 +109,11 @@ function AppContent() {
               {/* User Menu */}
               {isAuthenticated && (
                 <div className="flex items-center space-x-3 animate-slideInRight">
+                  {isDemo && (
+                    <span className="hidden sm:inline-flex items-center px-2.5 py-1 text-xs font-bold bg-amber-100 text-amber-800 border border-amber-300 rounded-lg shadow-xs">
+                      Live Demo
+                    </span>
+                  )}
                   <div className="flex items-center space-x-2 px-3 py-2 bg-white/60 backdrop-blur-sm rounded-xl shadow-md hover:shadow-lg transition-all duration-300">
                     <div className="w-8 h-8 bg-gradient-to-br from-primary-400 via-primary-500 to-primary-600 rounded-lg flex items-center justify-center shadow-md">
                       <FiUser className="w-4 h-4 text-white" />
