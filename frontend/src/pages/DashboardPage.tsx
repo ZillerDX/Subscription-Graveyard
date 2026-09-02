@@ -1,12 +1,14 @@
 /**
- * Dashboard Page - Modern Pro SaaS Design
- * Real-time financial telemetry, quadrant intelligence, and quick cancellation action center
+ * Dashboard Page — Production-grade staggered layout with kill zone intelligence
  */
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { FiPlus, FiArrowRight, FiTarget, FiTrendingDown, FiShield, FiXCircle } from 'react-icons/fi'
+import {
+  FiPlus, FiArrowRight, FiTarget, FiTrendingDown,
+  FiShield, FiXCircle, FiZap,
+} from 'react-icons/fi'
 import { dashboardService } from '../services/dashboardService'
 import { subscriptionService } from '../services/subscriptionService'
 import StatsCards from '../components/dashboard/StatsCards'
@@ -16,25 +18,21 @@ import CategoryBreakdownChart from '../components/dashboard/CategoryBreakdownCha
 const DashboardPage: React.FC = () => {
   const queryClient = useQueryClient()
 
-  // Fetch dashboard statistics
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: dashboardService.getStats,
   })
 
-  // Fetch kill zone data
   const { data: killZoneData = [], isLoading: killZoneLoading } = useQuery({
     queryKey: ['dashboard-kill-zone'],
     queryFn: dashboardService.getKillZoneData,
   })
 
-  // Fetch category breakdown
   const { data: categoryData = [], isLoading: categoryLoading } = useQuery({
     queryKey: ['dashboard-category-breakdown'],
     queryFn: dashboardService.getCategoryBreakdown,
   })
 
-  // Quick cancel mutation directly from kill candidates list
   const cancelMutation = useMutation({
     mutationFn: subscriptionService.cancel,
     onSuccess: (data) => {
@@ -44,88 +42,100 @@ const DashboardPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard-category-breakdown'] })
       toast.success(`"${data.name}" moved to the Graveyard. Savings realized!`)
     },
-    onError: () => {
-      toast.error('Failed to cancel subscription.')
-    },
+    onError: () => toast.error('Failed to cancel subscription.'),
   })
 
-  // Filter kill candidates (value_score <= 2) sorted by cost descending
   const killCandidates = killZoneData
     .filter((sub) => sub.value_score <= 2)
     .sort((a, b) => b.cost - a.cost)
 
   const totalPotentialMonthlySavings = killCandidates.reduce((sum, sub) => sum + sub.cost, 0)
-  const totalPotentialYearlySavings = Math.round(totalPotentialMonthlySavings * 12 * 100) / 100
+  const totalPotentialYearlySavings  = Math.round(totalPotentialMonthlySavings * 12 * 100) / 100
 
   return (
-    <div className="space-y-6 pb-12 animate-fadeIn">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div className="space-y-8 pb-16">
+
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 animate-fade-in-up">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white">
+          <p className="eyebrow mb-1.5">Financial Command Center</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white leading-tight">
             Dashboard
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1 font-medium">
+          <p className="text-sm text-zinc-400 mt-1 leading-relaxed">
             Monitor recurring burn rate, analyze quadrant efficiency, and eliminate zombie expenses
           </p>
         </div>
 
-        <div className="flex items-center space-x-2.5">
+        <div className="flex items-center gap-2.5 shrink-0">
           <Link
             to="/subscriptions"
-            className="inline-flex items-center space-x-2 px-4 py-2 bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-slate-700/80 rounded-xl text-xs font-semibold tracking-wide transition-all shadow-xs"
+            className="btn-outline text-xs py-2 px-3.5 rounded-lg"
           >
-            <span>Manage All</span>
+            Manage All
             <FiArrowRight className="w-3.5 h-3.5 shrink-0" />
           </Link>
           <Link
             to="/subscriptions"
-            className="inline-flex items-center space-x-2 px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-semibold tracking-wide shadow-sm hover:shadow-rose-500/20 transition-all"
+            className="btn-primary text-xs py-2 px-4 rounded-lg"
           >
             <FiPlus className="w-3.5 h-3.5 shrink-0" />
-            <span>Add Subscription</span>
+            Add Subscription
           </Link>
         </div>
       </div>
 
-      {/* Primary Financial Metric Cards */}
-      {stats && <StatsCards stats={stats} isLoading={statsLoading} />}
+      {/* ── Stats Cards ── */}
+      <div className="animate-fade-in-up delay-75">
+        <StatsCards stats={stats!} isLoading={statsLoading} />
+      </div>
 
-      {/* Kill Candidates Action Banner (if any detected) */}
+      {/* ── Kill Zone Alert Banner ── */}
       {killCandidates.length > 0 && (
-        <div className="bg-gradient-to-r from-rose-950/40 via-slate-900/80 to-slate-900/80 border border-rose-500/30 rounded-2xl p-5 sm:p-6 backdrop-blur-sm shadow-lg">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center space-x-2">
-                <div className="w-5 h-5 rounded bg-rose-500/20 text-rose-400 flex items-center justify-center">
-                  <FiTarget className="w-3 h-3" />
+        <div className="relative overflow-hidden bg-zinc-900 border border-rose-500/25 rounded-2xl p-5 sm:p-6 animate-fade-in-up delay-150">
+          {/* Background glow */}
+          <div className="absolute inset-0 bg-gradient-to-r from-rose-950/30 via-transparent to-transparent pointer-events-none" />
+          <div className="absolute top-0 left-0 w-1 h-full bg-brand-500 rounded-l-2xl" />
+
+          <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                {/* Pulsing dot */}
+                <div className="relative flex h-2.5 w-2.5 shrink-0">
+                  <span className="animate-ping-small absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
                 </div>
-                <h3 className="text-sm font-bold text-white tracking-tight">
-                  High-Priority Cancellation Targets Detected
-                </h3>
+                <div className="flex items-center gap-2">
+                  <FiTarget className="w-4 h-4 text-rose-400 shrink-0" />
+                  <h3 className="text-sm font-bold text-white tracking-tight">
+                    High-Priority Cancellation Targets
+                  </h3>
+                </div>
               </div>
-              <p className="text-xs text-slate-300">
-                You have <strong className="text-rose-300 font-semibold">{killCandidates.length}</strong> subscription{killCandidates.length !== 1 ? 's' : ''} with low perceived utility (≤2 stars). Cancelling them saves{' '}
-                <strong className="text-emerald-400 font-bold">${totalPotentialMonthlySavings.toFixed(2)}/mo</strong>{' '}
-                (${totalPotentialYearlySavings.toFixed(2)}/year).
+              <p className="text-xs text-zinc-400 leading-relaxed pl-4">
+                You have{' '}
+                <strong className="text-rose-300 font-bold">{killCandidates.length} subscription{killCandidates.length !== 1 ? 's' : ''}</strong>
+                {' '}with low utility (≤2 stars). Cancelling saves{' '}
+                <strong className="text-emerald-400 font-bold">${totalPotentialMonthlySavings.toFixed(2)}/mo</strong>
+                {' '}(${totalPotentialYearlySavings.toFixed(2)}/yr).
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
               {killCandidates.slice(0, 3).map((sub) => (
                 <div
                   key={sub.id}
-                  className="flex items-center space-x-2 bg-slate-950/70 border border-slate-800 px-3 py-1.5 rounded-lg text-xs"
+                  className="flex items-center gap-2 bg-zinc-950/70 border border-zinc-800 hover:border-rose-500/30 px-3 py-1.5 rounded-lg text-xs transition-all duration-150 group"
                 >
-                  <span className="font-semibold text-white truncate max-w-[120px]">{sub.name}</span>
-                  <span className="text-rose-400 font-bold">${sub.cost.toFixed(2)}</span>
+                  <span className="font-semibold text-white truncate max-w-[110px]">{sub.name}</span>
+                  <span className="text-rose-400 font-bold tabular">${sub.cost.toFixed(2)}</span>
                   <button
                     onClick={() => cancelMutation.mutate(sub.id)}
                     disabled={cancelMutation.isPending}
                     title="Send to Graveyard"
-                    className="text-slate-400 hover:text-rose-400 transition-colors p-0.5"
+                    className="text-zinc-600 hover:text-rose-400 transition-colors active:scale-[0.9]"
                   >
-                    <FiXCircle className="w-3.5 h-3.5" />
+                    <FiXCircle className="w-3.5 h-3.5 shrink-0" />
                   </button>
                 </div>
               ))}
@@ -134,71 +144,63 @@ const DashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* Main Visualizations Grid */}
-      <div className="grid grid-cols-1 gap-6">
-        {/* Kill Zone Scatter Plot */}
-        <div>
-          <KillZoneChart data={killZoneData} isLoading={killZoneLoading} />
-        </div>
-
-        {/* Category Breakdown Progress */}
-        <div>
-          <CategoryBreakdownChart data={categoryData} isLoading={categoryLoading} />
-        </div>
+      {/* ── Charts Grid ── */}
+      <div className="grid grid-cols-1 gap-6 animate-fade-in-up delay-200">
+        <KillZoneChart data={killZoneData} isLoading={killZoneLoading} />
+        <CategoryBreakdownChart data={categoryData} isLoading={categoryLoading} />
       </div>
 
-      {/* Key Analytical Insights */}
+      {/* ── Insight Cards ── */}
       {stats && stats.active_count > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-slate-900/70 border border-slate-800/90 rounded-xl p-5 backdrop-blur-sm">
-            <div className="flex items-center space-x-2 mb-2">
-              <div className="w-6 h-6 rounded-md bg-indigo-500/10 text-indigo-400 flex items-center justify-center">
-                <FiTrendingDown className="w-3.5 h-3.5" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in-up delay-300">
+          {/* Run-Rate Efficiency */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-all duration-200 group">
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center group-hover:bg-indigo-500/15 transition-colors">
+                <FiTrendingDown className="w-4 h-4 text-indigo-400 shrink-0" />
               </div>
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
-                Run-Rate Efficiency
-              </h4>
+              <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Run-Rate Efficiency</h4>
             </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Your average active subscription costs{' '}
-              <strong className="text-white">
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Average active subscription costs{' '}
+              <strong className="text-white tabular">
                 ${(stats.monthly_burn / stats.active_count).toFixed(2)}/mo
               </strong>
-              . Maintaining strict value reviews keeps your fixed monthly burn predictable.
+              . Strict value reviews keep your burn predictable.
             </p>
           </div>
 
-          <div className="bg-slate-900/70 border border-slate-800/90 rounded-xl p-5 backdrop-blur-sm">
-            <div className="flex items-center space-x-2 mb-2">
-              <div className="w-6 h-6 rounded-md bg-amber-500/10 text-amber-400 flex items-center justify-center">
-                <FiShield className="w-3.5 h-3.5" />
+          {/* Cost-Weighted Satisfaction */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-all duration-200 group">
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center group-hover:bg-amber-500/15 transition-colors">
+                <FiShield className="w-4 h-4 text-amber-400 shrink-0" />
               </div>
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
-                Cost-Weighted Satisfaction
-              </h4>
+              <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Weighted Satisfaction</h4>
             </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Overall satisfaction weighted by expenditure is{' '}
-              <strong className="text-amber-400">{stats.weighted_value_score || stats.average_value_score} / 5.0</strong>
-              . Higher scores reflect investment in high-utility tools rather than low-value subscriptions.
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Spend-weighted satisfaction is{' '}
+              <strong className="text-amber-400 tabular">
+                {(stats.weighted_value_score || stats.average_value_score || 0).toFixed(1)} / 5.0
+              </strong>
+              . Higher means spend goes to high-utility tools.
             </p>
           </div>
 
-          <div className="bg-slate-900/70 border border-slate-800/90 rounded-xl p-5 backdrop-blur-sm">
-            <div className="flex items-center space-x-2 mb-2">
-              <div className="w-6 h-6 rounded-md bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                <FiShield className="w-3.5 h-3.5" />
+          {/* Graveyard ROI */}
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-all duration-200 group">
+            <div className="flex items-center gap-2.5 mb-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/15 transition-colors">
+                <FiZap className="w-4 h-4 text-emerald-400 shrink-0" />
               </div>
-              <h4 className="text-xs font-bold text-white uppercase tracking-wider">
-                Graveyard Savings ROI
-              </h4>
+              <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Graveyard ROI</h4>
             </div>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              By cancelling {stats.cancelled_count} zombie subscriptions, you preserve{' '}
-              <strong className="text-emerald-400">
-                ${stats.realized_yearly_savings.toFixed(2)} per year
-              </strong>{' '}
-              in liquid capital.
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Cancelling {stats.cancelled_count} zombie subs preserves{' '}
+              <strong className="text-emerald-400 tabular">
+                ${stats.realized_yearly_savings.toFixed(2)}/yr
+              </strong>
+              {' '}in liquid capital.
             </p>
           </div>
         </div>

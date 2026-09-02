@@ -1,18 +1,11 @@
 /**
- * Kill Zone 4-Quadrant Matrix Component - Modern Pro SaaS Design
- * Mathematically sound, dual-axis thresholds ($20/mo & 3.0 stars), custom dark popover
+ * Kill Zone 4-Quadrant Matrix — Premium redesign
+ * Zinc surface, animated tooltip, branded quadrant legend
  */
 import React from 'react'
 import {
-  ScatterChart,
-  Scatter,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  ReferenceLine,
-  Cell,
+  ScatterChart, Scatter, XAxis, YAxis, CartesianGrid,
+  Tooltip, ResponsiveContainer, ReferenceLine, Cell,
 } from 'recharts'
 import { FiCrosshair, FiAlertTriangle } from 'react-icons/fi'
 import type { KillZoneDataPoint } from '../../services/dashboardService'
@@ -23,14 +16,68 @@ interface KillZoneChartProps {
   isLoading?: boolean
 }
 
+const QUADRANT_COLORS: Record<string, string> = {
+  kill_zone:          '#f43f5e',
+  silent_bleed:       '#f59e0b',
+  premium_investment: '#6366f1',
+  bargain:            '#10b981',
+  neutral:            '#71717a',
+}
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (!active || !payload?.length) return null
+  const item: KillZoneDataPoint = payload[0].payload
+  const isKillZone = item.quadrant === 'kill_zone'
+
+  return (
+    <div className="bg-zinc-900 border border-zinc-700/80 rounded-xl shadow-modal p-3.5 min-w-[210px] text-xs pointer-events-none">
+      <div className="flex items-center justify-between gap-3 pb-2.5 border-b border-zinc-800">
+        <span className="font-bold text-white text-sm truncate">{item.name}</span>
+        {item.category && (
+          <span className={`px-2 py-0.5 rounded-md font-bold text-[9px] uppercase tracking-widest border ${
+            isKillZone
+              ? 'bg-rose-500/15 text-rose-300 border-rose-500/25'
+              : 'bg-zinc-800 text-zinc-400 border-zinc-700'
+          }`}>
+            {item.category}
+          </span>
+        )}
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 my-2.5">
+        <div>
+          <span className="text-[10px] text-zinc-500 block uppercase tracking-wider mb-0.5">Monthly Cost</span>
+          <span className="text-sm font-bold text-white tabular">${item.cost.toFixed(2)}</span>
+        </div>
+        <div>
+          <span className="text-[10px] text-zinc-500 block uppercase tracking-wider mb-0.5">Value Rating</span>
+          <span className="text-sm font-bold text-amber-400 tabular">{item.value_score} / 5</span>
+        </div>
+      </div>
+
+      <div className="pt-2.5 border-t border-zinc-800">
+        <div className="flex items-center gap-1.5">
+          <div
+            className="w-1.5 h-1.5 rounded-full shrink-0"
+            style={{ backgroundColor: QUADRANT_COLORS[item.quadrant] ?? '#71717a' }}
+          />
+          <span className="text-[11px] font-semibold leading-tight" style={{ color: QUADRANT_COLORS[item.quadrant] ?? '#a1a1aa' }}>
+            {item.recommendation}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const KillZoneChart: React.FC<KillZoneChartProps> = ({ data, isLoading = false }) => {
   if (isLoading) {
     return (
-      <div className="bg-slate-900/70 border border-slate-800/90 rounded-2xl p-6 backdrop-blur-sm">
-        <div className="h-80 flex items-center justify-center text-slate-500 text-sm">
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 border-2 border-rose-500 border-t-transparent rounded-full animate-spin" />
-            <span>Calculating matrix...</span>
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6">
+        <div className="h-80 flex items-center justify-center">
+          <div className="flex items-center gap-2 text-zinc-500 text-sm">
+            <div className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin shrink-0" />
+            Calculating matrix…
           </div>
         </div>
       </div>
@@ -39,126 +86,50 @@ const KillZoneChart: React.FC<KillZoneChartProps> = ({ data, isLoading = false }
 
   if (data.length === 0) {
     return (
-      <div className="bg-slate-900/70 border border-slate-800/90 rounded-2xl p-8 text-center">
-        <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 mx-auto flex items-center justify-center text-slate-400 mb-3">
-          <FiCrosshair className="w-6 h-6" />
+      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-10 text-center">
+        <div className="w-12 h-12 rounded-xl bg-zinc-800 border border-zinc-700 mx-auto flex items-center justify-center text-zinc-500 mb-4">
+          <FiCrosshair className="w-6 h-6 shrink-0" />
         </div>
-        <h3 className="text-base font-semibold text-white">No active subscriptions to analyze</h3>
-        <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+        <h3 className="text-sm font-semibold text-white">No subscriptions to analyze</h3>
+        <p className="text-xs text-zinc-500 mt-1 max-w-xs mx-auto">
           Add active subscriptions to unlock quadrant analysis and identify wasteful spending.
         </p>
       </div>
     )
   }
 
-  // Point colors mapped strictly to quadrant
-  const getPointColor = (quadrant: string) => {
-    switch (quadrant) {
-      case 'kill_zone':
-        return '#f43f5e' // Rose-500 (Kill Zone)
-      case 'silent_bleed':
-        return '#f59e0b' // Amber-500 (Silent Bleed)
-      case 'premium_investment':
-        return '#6366f1' // Indigo-500 (Investment)
-      case 'bargain':
-        return '#10b981' // Emerald-500 (Bargain)
-      default:
-        return '#94a3b8' // Slate-400 (Neutral)
-    }
-  }
-
-  // Custom high-end dark tooltip
-  const CustomTooltip = ({ active, payload }: any) => {
-    if (active && payload && payload.length) {
-      const item: KillZoneDataPoint = payload[0].payload
-      const isKillZone = item.quadrant === 'kill_zone'
-
-      return (
-        <div className="bg-slate-900 border border-slate-700/80 rounded-xl shadow-2xl p-3.5 min-w-[200px] text-xs">
-          <div className="flex items-center justify-between gap-3 pb-2 border-b border-slate-800">
-            <span className="font-bold text-white text-sm truncate">{item.name}</span>
-            <span
-              className={`px-2 py-0.5 rounded-md font-semibold text-[10px] uppercase tracking-wider ${
-                isKillZone
-                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                  : 'bg-slate-800 text-slate-300 border border-slate-700'
-              }`}
-            >
-              {item.category}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 my-2.5">
-            <div>
-              <span className="text-[10px] text-slate-400 block uppercase">Monthly Cost</span>
-              <span className="text-sm font-bold text-white">${item.cost.toFixed(2)}</span>
-            </div>
-            <div>
-              <span className="text-[10px] text-slate-400 block uppercase">Value Rating</span>
-              <span className="text-sm font-bold text-amber-400">
-                {item.value_score} / 5
-              </span>
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-slate-800 text-[11px] font-medium leading-tight">
-            <span
-              className={
-                isKillZone
-                  ? 'text-rose-400 font-semibold'
-                  : item.quadrant === 'silent_bleed'
-                  ? 'text-amber-400'
-                  : item.quadrant === 'bargain'
-                  ? 'text-emerald-400 font-semibold'
-                  : 'text-slate-300'
-              }
-            >
-              {item.recommendation}
-            </span>
-          </div>
-        </div>
-      )
-    }
-    return null
-  }
-
-  // Count per quadrant
-  const killZoneCount = data.filter((d) => d.quadrant === 'kill_zone').length
+  const killZoneCount    = data.filter((d) => d.quadrant === 'kill_zone').length
   const silentBleedCount = data.filter((d) => d.quadrant === 'silent_bleed').length
-  const bargainCount = data.filter((d) => d.quadrant === 'bargain').length
-  const investmentCount = data.filter((d) => d.quadrant === 'premium_investment').length
+  const bargainCount     = data.filter((d) => d.quadrant === 'bargain').length
+  const investmentCount  = data.filter((d) => d.quadrant === 'premium_investment').length
 
   return (
-    <div className="bg-slate-900/70 border border-slate-800/90 rounded-2xl p-6 backdrop-blur-sm shadow-xl">
+    <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-card">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-          <div className="flex items-center space-x-2">
-            <div className="w-6 h-6 rounded-md bg-rose-500/10 text-rose-400 flex items-center justify-center">
-              <FiCrosshair className="w-3.5 h-3.5" />
-            </div>
-            <h3 className="text-base font-bold text-white tracking-tight">
-              Kill Zone Matrix (Cost vs Value)
-            </h3>
-          </div>
-          <p className="text-xs text-slate-400 mt-1">
-            4-Quadrant analysis. High-cost, low-value subscriptions are priority targets for immediate cancellation.
+          <p className="eyebrow mb-1">Cost vs. Value Analysis</p>
+          <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+            <FiCrosshair className="w-4 h-4 text-brand-400 shrink-0" />
+            Kill Zone Matrix
+          </h3>
+          <p className="text-xs text-zinc-500 mt-1">
+            4-quadrant scatter. High-cost, low-value subs are prime cancellation targets.
           </p>
         </div>
-
         {killZoneCount > 0 && (
-          <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold shrink-0">
             <FiAlertTriangle className="w-3.5 h-3.5 shrink-0 text-rose-400" />
-            <span>{killZoneCount} Kill Zone Target{killZoneCount !== 1 ? 's' : ''} Detected</span>
+            {killZoneCount} Kill Zone Target{killZoneCount !== 1 ? 's' : ''}
           </div>
         )}
       </div>
 
-      {/* Scatter Chart Area */}
+      {/* Chart */}
       <div className="w-full h-80 sm:h-96">
         <ResponsiveContainer width="100%" height="100%">
           <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 10 }}>
-            <CartesianGrid strokeDasharray="2 2" stroke="#1e293b" />
+            <CartesianGrid strokeDasharray="2 4" stroke="#27272a" />
 
             <XAxis
               type="number"
@@ -166,9 +137,10 @@ const KillZoneChart: React.FC<KillZoneChartProps> = ({ data, isLoading = false }
               name="Monthly Cost"
               unit="$"
               domain={[0, (dataMax: number) => Math.max(80, Math.ceil((dataMax + 10) / 10) * 10)]}
-              stroke="#64748b"
-              tick={{ fontSize: 11, fill: '#64748b' }}
-              tickLine={{ stroke: '#334155' }}
+              stroke="#52525b"
+              tick={{ fontSize: 11, fill: '#71717a' }}
+              tickLine={{ stroke: '#3f3f46' }}
+              label={{ value: 'Monthly Cost ($)', position: 'insideBottom', offset: -15, style: { fontSize: 11, fill: '#52525b' } }}
             />
 
             <YAxis
@@ -177,33 +149,26 @@ const KillZoneChart: React.FC<KillZoneChartProps> = ({ data, isLoading = false }
               name="Value Score"
               domain={[0.5, 5.5]}
               ticks={[1, 2, 3, 4, 5]}
-              stroke="#64748b"
-              tick={{ fontSize: 11, fill: '#64748b' }}
-              tickLine={{ stroke: '#334155' }}
+              stroke="#52525b"
+              tick={{ fontSize: 11, fill: '#71717a' }}
+              tickLine={{ stroke: '#3f3f46' }}
+              label={{ value: 'Value (1–5)', angle: -90, position: 'insideLeft', offset: 15, style: { fontSize: 11, fill: '#52525b' } }}
             />
 
-            {/* Threshold Reference Lines */}
-            <ReferenceLine
-              y={VALUE_THRESHOLD}
-              stroke="#475569"
-              strokeDasharray="4 4"
-              strokeWidth={1.5}
-            />
-            <ReferenceLine
-              x={COST_THRESHOLD}
-              stroke="#475569"
-              strokeDasharray="4 4"
-              strokeWidth={1.5}
+            <ReferenceLine y={VALUE_THRESHOLD} stroke="#3f3f46" strokeDasharray="5 3" strokeWidth={1.5} />
+            <ReferenceLine x={COST_THRESHOLD}  stroke="#3f3f46" strokeDasharray="5 3" strokeWidth={1.5} />
+
+            <Tooltip
+              content={<CustomTooltip />}
+              cursor={{ strokeDasharray: '3 3', stroke: '#3f3f46' }}
             />
 
-            <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3', stroke: '#475569' }} />
-
-            <Scatter name="Subscriptions" data={data}>
+            <Scatter name="Subscriptions" data={data} isAnimationActive>
               {data.map((entry) => (
                 <Cell
                   key={entry.id}
-                  fill={getPointColor(entry.quadrant)}
-                  stroke="#0f172a"
+                  fill={QUADRANT_COLORS[entry.quadrant] ?? '#71717a'}
+                  stroke="#09090b"
                   strokeWidth={2}
                   r={7}
                 />
@@ -213,39 +178,24 @@ const KillZoneChart: React.FC<KillZoneChartProps> = ({ data, isLoading = false }
         </ResponsiveContainer>
       </div>
 
-      {/* Quadrant Legend Bar */}
-      <div className="mt-6 pt-4 border-t border-slate-800/80 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-        <div className="p-2.5 rounded-lg bg-slate-950/50 border border-slate-800/60 flex items-start space-x-2.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-rose-500 mt-1 shrink-0" />
-          <div>
-            <span className="font-bold text-white block">Kill Zone ({killZoneCount})</span>
-            <span className="text-[11px] text-slate-400">High Cost (≥$20) + Low Value (≤2)</span>
+      {/* Quadrant Legend */}
+      <div className="mt-6 pt-5 border-t border-zinc-800/80 grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+        {[
+          { color: '#f43f5e', label: 'Kill Zone',        count: killZoneCount,    desc: 'Cost ≥$20 + Value ≤2' },
+          { color: '#f59e0b', label: 'Silent Bleeders',  count: silentBleedCount, desc: 'Cost <$20 + Value ≤2' },
+          { color: '#6366f1', label: 'Premium',          count: investmentCount,  desc: 'Cost ≥$20 + Value ≥4' },
+          { color: '#10b981', label: 'Bargain Heroes',   count: bargainCount,     desc: 'Cost <$20 + Value ≥4' },
+        ].map(({ color, label, count, desc }) => (
+          <div key={label} className="p-3 rounded-xl bg-zinc-950/60 border border-zinc-800/60 flex items-start gap-2.5">
+            <div className="w-2.5 h-2.5 rounded-full mt-0.5 shrink-0" style={{ backgroundColor: color }} />
+            <div>
+              <span className="font-bold text-zinc-200 block leading-snug">
+                {label} <span className="text-zinc-500 font-normal">({count})</span>
+              </span>
+              <span className="text-[10px] text-zinc-600">{desc}</span>
+            </div>
           </div>
-        </div>
-
-        <div className="p-2.5 rounded-lg bg-slate-950/50 border border-slate-800/60 flex items-start space-x-2.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-amber-500 mt-1 shrink-0" />
-          <div>
-            <span className="font-bold text-white block">Silent Bleeders ({silentBleedCount})</span>
-            <span className="text-[11px] text-slate-400">Low Cost (&lt;$20) + Low Value (≤2)</span>
-          </div>
-        </div>
-
-        <div className="p-2.5 rounded-lg bg-slate-950/50 border border-slate-800/60 flex items-start space-x-2.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-indigo-500 mt-1 shrink-0" />
-          <div>
-            <span className="font-bold text-white block">Premium ({investmentCount})</span>
-            <span className="text-[11px] text-slate-400">High Cost (≥$20) + High Value (≥4)</span>
-          </div>
-        </div>
-
-        <div className="p-2.5 rounded-lg bg-slate-950/50 border border-slate-800/60 flex items-start space-x-2.5">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 mt-1 shrink-0" />
-          <div>
-            <span className="font-bold text-white block">Bargain Heroes ({bargainCount})</span>
-            <span className="text-[11px] text-slate-400">Low Cost (&lt;$20) + High Value (≥4)</span>
-          </div>
-        </div>
+        ))}
       </div>
     </div>
   )
