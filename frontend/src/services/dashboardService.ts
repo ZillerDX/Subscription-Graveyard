@@ -25,6 +25,8 @@ export interface DashboardStats {
   kill_zone_yearly_waste: number
   average_value_score: number
   weighted_value_score: number
+  total_monthly_hours: number // Total hours utilized across active subscriptions
+  avg_cost_per_hour: number // Average cost per hour of usage ($/hr)
 }
 
 export interface KillZoneDataPoint {
@@ -33,6 +35,9 @@ export interface KillZoneDataPoint {
   cost: number // Monthly normalized cost
   raw_cost: number
   value_score: number
+  monthly_hours: number // Hours used per month
+  cost_per_hour: number // Cost per hour of usage ($/hr)
+  logo_key?: string | null
   category: string | null
   billing_cycle: 'monthly' | 'yearly'
   quadrant: QuadrantType
@@ -52,7 +57,6 @@ export const dashboardService = {
    * Get dashboard statistics
    */
   getStats: async (): Promise<DashboardStats> => {
-    // Check if backend available
     const isLocalOrNoBackend = !import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL.includes('localhost')
     if (isLocalOrNoBackend) {
       const subs = authStorage.getUserSubscriptions()

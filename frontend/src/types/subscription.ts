@@ -11,7 +11,9 @@ export interface Subscription {
   name: string
   cost: number
   billing_cycle: BillingCycle
-  value_score: number
+  value_score: number // Kept for backwards compatibility (1-5), derived or direct
+  monthly_hours?: number // Hours used per month
+  logo_key?: string | null // Identifier for real brand vector logo (e.g. 'youtube', 'netflix')
   category?: string | null
   emoji?: string | null
   status: SubscriptionStatus
@@ -23,7 +25,9 @@ export interface SubscriptionCreate {
   name: string
   cost: number
   billing_cycle: BillingCycle
-  value_score: number
+  value_score?: number
+  monthly_hours?: number
+  logo_key?: string | null
   category?: string
   emoji?: string
 }
@@ -33,6 +37,8 @@ export interface SubscriptionUpdate {
   cost?: number
   billing_cycle?: BillingCycle
   value_score?: number
+  monthly_hours?: number
+  logo_key?: string | null
   category?: string
   emoji?: string
 }

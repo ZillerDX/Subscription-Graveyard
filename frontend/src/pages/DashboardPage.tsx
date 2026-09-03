@@ -1,38 +1,52 @@
 /**
- * Dashboard Page — Production-grade staggered layout with kill zone intelligence
+ * Dashboard Page — Minimal Toggl Style
+ * Telemetry, Kill Zone Matrix based on usage hours, and quick cancellation action center
  */
-import React from 'react'
+import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import {
-  FiPlus, FiArrowRight, FiTarget, FiTrendingDown,
-  FiShield, FiXCircle, FiZap,
+  FiPlus,
+  FiArrowRight,
+  FiTarget,
+  FiTrendingDown,
+  FiClock,
+  FiCheckCircle,
+  FiXCircle,
 } from 'react-icons/fi'
 import { dashboardService } from '../services/dashboardService'
 import { subscriptionService } from '../services/subscriptionService'
 import StatsCards from '../components/dashboard/StatsCards'
 import KillZoneChart from '../components/dashboard/KillZoneChart'
 import CategoryBreakdownChart from '../components/dashboard/CategoryBreakdownChart'
+import SubscriptionForm from '../components/subscriptions/SubscriptionForm'
+import { BrandLogo } from '../components/common/BrandLogo'
+import type { SubscriptionCreate } from '../types/subscription'
 
 const DashboardPage: React.FC = () => {
   const queryClient = useQueryClient()
+  const [isFormOpen, setIsFormOpen] = useState(false)
 
+  // Fetch dashboard statistics
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn: dashboardService.getStats,
   })
 
+  // Fetch kill zone data
   const { data: killZoneData = [], isLoading: killZoneLoading } = useQuery({
     queryKey: ['dashboard-kill-zone'],
     queryFn: dashboardService.getKillZoneData,
   })
 
+  // Fetch category breakdown
   const { data: categoryData = [], isLoading: categoryLoading } = useQuery({
     queryKey: ['dashboard-category-breakdown'],
     queryFn: dashboardService.getCategoryBreakdown,
   })
 
+  // Quick cancel mutation
   const cancelMutation = useMutation({
     mutationFn: subscriptionService.cancel,
     onSuccess: (data) => {
@@ -40,102 +54,117 @@ const DashboardPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-kill-zone'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-category-breakdown'] })
-      toast.success(`"${data.name}" moved to the Graveyard. Savings realized!`)
+      toast.success(`"${data.name}" ถูกย้ายไปที่ Graveyard เรียบร้อย ประหยัดเงินทันที!`)
     },
-    onError: () => toast.error('Failed to cancel subscription.'),
+    onError: () => {
+      toast.error('ไม่สามารถยกเลิก Subscription ได้')
+    },
   })
 
+  // Create mutation for quick add
+  const createMutation = useMutation({
+    mutationFn: subscriptionService.create,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['subscriptions'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-kill-zone'] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard-category-breakdown'] })
+      setIsFormOpen(false)
+      toast.success(`เพิ่ม "${data.name}" เรียบร้อยแล้ว`)
+    },
+    onError: (err: any) => {
+      toast.error(err.message || 'เกิดข้อผิดพลาดในการสร้าง')
+    },
+  })
+
+  // Filter high-priority kill candidates (Kill Zone: high cost, low hours)
   const killCandidates = killZoneData
-    .filter((sub) => sub.value_score <= 2)
+    .filter((sub) => sub.quadrant === 'kill_zone' || (sub.monthly_hours < 5 && sub.cost >= 15))
     .sort((a, b) => b.cost - a.cost)
 
   const totalPotentialMonthlySavings = killCandidates.reduce((sum, sub) => sum + sub.cost, 0)
-  const totalPotentialYearlySavings  = Math.round(totalPotentialMonthlySavings * 12 * 100) / 100
+  const totalPotentialYearlySavings = Math.round(totalPotentialMonthlySavings * 12 * 100) / 100
 
   return (
-    <div className="space-y-8 pb-16">
-
-      {/* ── Page Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 animate-fade-in-up">
+    <div className="space-y-6 pb-12 animate-fade-in">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <p className="eyebrow mb-1.5">Financial Command Center</p>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-white leading-tight">
-            Dashboard
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#2D2D2D]">
+            Dashboard Overview
           </h1>
-          <p className="text-sm text-zinc-400 mt-1 leading-relaxed">
-            Monitor recurring burn rate, analyze quadrant efficiency, and eliminate zombie expenses
+          <p className="text-xs sm:text-sm text-[#757575] mt-1 font-medium">
+            วิเคราะห์ความคุ้มค่าตามเวลาใช้งานจริง (Usage Time) และกำจัดบริการที่เสียเปล่า
           </p>
         </div>
 
         <div className="flex items-center gap-2.5 shrink-0">
           <Link
             to="/subscriptions"
-            className="btn-outline text-xs py-2 px-3.5 rounded-lg"
+            className="btn-soft text-xs py-2 px-3.5 rounded-xl shadow-xs"
           >
-            Manage All
+            <span>จัดการทั้งหมด</span>
             <FiArrowRight className="w-3.5 h-3.5 shrink-0" />
           </Link>
-          <Link
-            to="/subscriptions"
-            className="btn-primary text-xs py-2 px-4 rounded-lg"
+          <button
+            onClick={() => setIsFormOpen(true)}
+            className="btn-berry text-xs py-2 px-4 rounded-xl shadow-xs"
           >
             <FiPlus className="w-3.5 h-3.5 shrink-0" />
-            Add Subscription
-          </Link>
+            <span>เพิ่ม Subscription</span>
+          </button>
         </div>
       </div>
 
-      {/* ── Stats Cards ── */}
-      <div className="animate-fade-in-up delay-75">
-        <StatsCards stats={stats!} isLoading={statsLoading} />
-      </div>
+      {/* Primary Financial & Usage Metric Cards */}
+      {stats && <StatsCards stats={stats} isLoading={statsLoading} />}
 
-      {/* ── Kill Zone Alert Banner ── */}
+      {/* Kill Candidates Action Banner (If any detected) */}
       {killCandidates.length > 0 && (
-        <div className="relative overflow-hidden bg-zinc-900 border border-rose-500/25 rounded-2xl p-5 sm:p-6 animate-fade-in-up delay-150">
-          {/* Background glow */}
-          <div className="absolute inset-0 bg-gradient-to-r from-rose-950/30 via-transparent to-transparent pointer-events-none" />
-          <div className="absolute top-0 left-0 w-1 h-full bg-brand-500 rounded-l-2xl" />
-
-          <div className="relative flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5">
-            <div className="space-y-1.5">
+        <div className="bg-rose-50/70 border border-rose-200/80 rounded-2xl p-5 sm:p-6 shadow-xs">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="space-y-1">
               <div className="flex items-center gap-2">
-                {/* Pulsing dot */}
-                <div className="relative flex h-2.5 w-2.5 shrink-0">
-                  <span className="animate-ping-small absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75" />
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-rose-500" />
+                <div className="w-6 h-6 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center">
+                  <FiTarget className="w-3.5 h-3.5" />
                 </div>
-                <div className="flex items-center gap-2">
-                  <FiTarget className="w-4 h-4 text-rose-400 shrink-0" />
-                  <h3 className="text-sm font-bold text-white tracking-tight">
-                    High-Priority Cancellation Targets
-                  </h3>
-                </div>
+                <h3 className="text-sm font-bold text-rose-900 tracking-tight">
+                  พบเป้าหมายที่ควรยกเลิกด่วน (Kill Zone Candidates)
+                </h3>
               </div>
-              <p className="text-xs text-zinc-400 leading-relaxed pl-4">
-                You have{' '}
-                <strong className="text-rose-300 font-bold">{killCandidates.length} subscription{killCandidates.length !== 1 ? 's' : ''}</strong>
-                {' '}with low utility (≤2 stars). Cancelling saves{' '}
-                <strong className="text-emerald-400 font-bold">${totalPotentialMonthlySavings.toFixed(2)}/mo</strong>
-                {' '}(${totalPotentialYearlySavings.toFixed(2)}/yr).
+              <p className="text-xs text-rose-800/90 leading-relaxed">
+                คุณมี <strong className="text-rose-900 font-bold">{killCandidates.length} บริการ</strong>{' '}
+                ที่จ่ายค่าบริการสูงแต่ใช้งานน้อยมาก หากยกเลิกจะช่วยประหยัดเงินได้ถึง{' '}
+                <strong className="text-emerald-700 font-bold">
+                  ${totalPotentialMonthlySavings.toFixed(2)}/เดือน
+                </strong>{' '}
+                (${totalPotentialYearlySavings.toFixed(2)}/ปี)
               </p>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-2">
               {killCandidates.slice(0, 3).map((sub) => (
                 <div
                   key={sub.id}
-                  className="flex items-center gap-2 bg-zinc-950/70 border border-zinc-800 hover:border-rose-500/30 px-3 py-1.5 rounded-lg text-xs transition-all duration-150 group"
+                  className="flex items-center gap-2.5 bg-white border border-rose-200 px-3 py-1.5 rounded-xl text-xs shadow-xs"
                 >
-                  <span className="font-semibold text-white truncate max-w-[110px]">{sub.name}</span>
-                  <span className="text-rose-400 font-bold tabular">${sub.cost.toFixed(2)}</span>
+                  <BrandLogo logoKey={sub.logo_key} name={sub.name} className="w-6 h-6 rounded-lg" size={12} />
+                  <div className="min-w-0">
+                    <span className="font-bold text-[#2D2D2D] truncate block max-w-[100px] leading-tight">
+                      {sub.name}
+                    </span>
+                    <span className="text-[10px] text-[#8A8A8A]">
+                      ใช้ {sub.monthly_hours} ชม.
+                    </span>
+                  </div>
+                  <span className="text-rose-600 font-extrabold tabular">${sub.cost.toFixed(2)}</span>
                   <button
                     onClick={() => cancelMutation.mutate(sub.id)}
                     disabled={cancelMutation.isPending}
-                    title="Send to Graveyard"
-                    className="text-zinc-600 hover:text-rose-400 transition-colors active:scale-[0.9]"
+                    title="ส่งไป Graveyard (ยกเลิก)"
+                    className="text-gray-400 hover:text-rose-600 p-1 transition-colors"
                   >
-                    <FiXCircle className="w-3.5 h-3.5 shrink-0" />
+                    <FiXCircle className="w-4 h-4" />
                   </button>
                 </div>
               ))}
@@ -144,66 +173,82 @@ const DashboardPage: React.FC = () => {
         </div>
       )}
 
-      {/* ── Charts Grid ── */}
-      <div className="grid grid-cols-1 gap-6 animate-fade-in-up delay-200">
+      {/* Main Visualizations Grid */}
+      <div className="grid grid-cols-1 gap-6">
+        {/* Kill Zone Scatter Plot */}
         <KillZoneChart data={killZoneData} isLoading={killZoneLoading} />
+
+        {/* Category Breakdown Progress */}
         <CategoryBreakdownChart data={categoryData} isLoading={categoryLoading} />
       </div>
 
-      {/* ── Insight Cards ── */}
+      {/* Analytical Insights */}
       {stats && stats.active_count > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-fade-in-up delay-300">
-          {/* Run-Rate Efficiency */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-all duration-200 group">
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center group-hover:bg-indigo-500/15 transition-colors">
-                <FiTrendingDown className="w-4 h-4 text-indigo-400 shrink-0" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="card-minimal p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-xl bg-sky-50 text-sky-600 flex items-center justify-center">
+                <FiClock className="w-3.5 h-3.5" />
               </div>
-              <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Run-Rate Efficiency</h4>
+              <h4 className="text-xs font-bold text-[#2D2D2D] uppercase tracking-wider">
+                ประสิทธิภาพเวลา (Usage Efficiency)
+              </h4>
             </div>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Average active subscription costs{' '}
-              <strong className="text-white tabular">
-                ${(stats.monthly_burn / stats.active_count).toFixed(2)}/mo
-              </strong>
-              . Strict value reviews keep your burn predictable.
+            <p className="text-xs text-[#5A5A5A] leading-relaxed">
+              คุณใช้งานเฉลี่ย{' '}
+              <strong className="text-[#2D2D2D]">
+                {(stats.total_monthly_hours / stats.active_count).toFixed(1)} ชม./แอพ
+              </strong>{' '}
+              ต่อเดือน โดยมีต้นทุนการใช้งานรวมอยู่ที่{' '}
+              <strong className="text-[#B02A82]">${stats.avg_cost_per_hour.toFixed(2)} / ชม.</strong>
             </p>
           </div>
 
-          {/* Cost-Weighted Satisfaction */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-all duration-200 group">
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center group-hover:bg-amber-500/15 transition-colors">
-                <FiShield className="w-4 h-4 text-amber-400 shrink-0" />
+          <div className="card-minimal p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-xl bg-[#FCE7F3] text-[#B02A82] flex items-center justify-center">
+                <FiTrendingDown className="w-3.5 h-3.5" />
               </div>
-              <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Weighted Satisfaction</h4>
+              <h4 className="text-xs font-bold text-[#2D2D2D] uppercase tracking-wider">
+                ค่าเฉลี่ยต่อบริการ (Average Spend)
+              </h4>
             </div>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Spend-weighted satisfaction is{' '}
-              <strong className="text-amber-400 tabular">
-                {(stats.weighted_value_score || stats.average_value_score || 0).toFixed(1)} / 5.0
-              </strong>
-              . Higher means spend goes to high-utility tools.
+            <p className="text-xs text-[#5A5A5A] leading-relaxed">
+              ค่าใช้จ่ายเฉลี่ยอยู่ที่{' '}
+              <strong className="text-[#2D2D2D]">
+                ${(stats.monthly_burn / stats.active_count).toFixed(2)}/เดือน
+              </strong>{' '}
+              ต่อหนึ่งบริการ การตัดบริการที่ไม่ได้ใช้งานช่วยลด Fixed Cost ได้อย่างมีนัยสำคัญ
             </p>
           </div>
 
-          {/* Graveyard ROI */}
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 hover:border-zinc-700 transition-all duration-200 group">
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/15 transition-colors">
-                <FiZap className="w-4 h-4 text-emerald-400 shrink-0" />
+          <div className="card-minimal p-5">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <FiCheckCircle className="w-3.5 h-3.5" />
               </div>
-              <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wider">Graveyard ROI</h4>
+              <h4 className="text-xs font-bold text-[#2D2D2D] uppercase tracking-wider">
+                ผลตอบแทนจากการตัดรายจ่าย (Savings ROI)
+              </h4>
             </div>
-            <p className="text-xs text-zinc-400 leading-relaxed">
-              Cancelling {stats.cancelled_count} zombie subs preserves{' '}
-              <strong className="text-emerald-400 tabular">
-                ${stats.realized_yearly_savings.toFixed(2)}/yr
+            <p className="text-xs text-[#5A5A5A] leading-relaxed">
+              คุณได้ยกเลิกไปแล้ว {stats.cancelled_count} รายการ ช่วยรักษาเงินสดในกระเป๋าได้ถึง{' '}
+              <strong className="text-emerald-600 font-bold">
+                +${stats.realized_yearly_savings.toFixed(2)} ต่อปี
               </strong>
-              {' '}in liquid capital.
             </p>
           </div>
         </div>
+      )}
+
+      {/* Quick Add Form Modal */}
+      {isFormOpen && (
+        <SubscriptionForm
+          onSubmit={async (data: SubscriptionCreate) => {
+            await createMutation.mutateAsync(data)
+          }}
+          onCancel={() => setIsFormOpen(false)}
+        />
       )}
     </div>
   )

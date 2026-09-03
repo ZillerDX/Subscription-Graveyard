@@ -1,40 +1,22 @@
 /**
- * Login Page — Premium split-panel design
- * Left: animated brand hero  |  Right: clean form
+ * Login Page — Minimal Toggl Light Style
  */
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  FiMail, FiLock, FiArrowRight, FiPlay,
-  FiActivity, FiEye, FiEyeOff, FiAlertCircle,
-  FiTrendingDown, FiShield, FiDollarSign,
+  FiMail,
+  FiLock,
+  FiArrowRight,
+  FiPlay,
+  FiActivity,
+  FiEye,
+  FiEyeOff,
+  FiAlertCircle,
+  FiClock,
+  FiDollarSign,
+  FiShield,
 } from 'react-icons/fi'
 import { useAuth } from '../context/AuthContext'
-
-/* ── Mini preview card for the hero panel ────────────────── */
-function HeroMetricCard({
-  label, value, sub, color, delay,
-}: {
-  label: string; value: string; sub: string
-  color: 'rose' | 'emerald' | 'indigo'; delay: number
-}) {
-  const colorMap = {
-    rose:    { bg: 'bg-rose-500/10', border: 'border-rose-500/20', text: 'text-rose-400' },
-    emerald: { bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', text: 'text-emerald-400' },
-    indigo:  { bg: 'bg-indigo-500/10', border: 'border-indigo-500/20', text: 'text-indigo-400' },
-  }
-  const c = colorMap[color]
-  return (
-    <div
-      className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4 backdrop-blur-sm animate-fade-in-up"
-      style={{ animationDelay: `${delay}ms` }}
-    >
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500 mb-1">{label}</p>
-      <p className={`text-xl font-bold tracking-tight tabular ${c.text}`}>{value}</p>
-      <p className="text-[11px] text-zinc-500 mt-0.5">{sub}</p>
-    </div>
-  )
-}
 
 const LoginPage: React.FC = () => {
   const { login, loginAsDemo, isLoading } = useAuth()
@@ -48,10 +30,11 @@ const LoginPage: React.FC = () => {
     e.preventDefault()
     setError('')
     setIsSubmitting(true)
+
     try {
       await login({ email, password })
     } catch (err: any) {
-      setError(err.message || 'Invalid email or password. Try the demo instead.')
+      setError(err.message || 'อีเมลหรือรหัสผ่านไม่ถูกต้อง โปรดลองอีกครั้งหรือใช้โหมดทดสอบ')
     } finally {
       setIsSubmitting(false)
     }
@@ -60,198 +43,157 @@ const LoginPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <div className="flex items-center gap-3 text-zinc-400 text-sm">
-          <div className="w-5 h-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
-          <span>Verifying session…</span>
+        <div className="flex items-center gap-3 text-[#757575] text-sm font-medium">
+          <div className="w-5 h-5 border-2 border-[#B02A82] border-t-transparent rounded-full animate-spin" />
+          <span>กำลังตรวจสอบสถานะการเข้าสู่ระบบ...</span>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-[calc(100vh-5rem)] flex items-center justify-center py-8 animate-fade-in">
-      <div className="w-full max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-0 rounded-2xl overflow-hidden shadow-modal border border-zinc-800/80">
-
-        {/* ── Left: Brand Hero Panel ── */}
-        <div className="hidden lg:flex flex-col relative bg-gradient-to-br from-zinc-950 via-zinc-900 to-zinc-950 p-10 overflow-hidden">
-          {/* Ambient glow */}
-          <div className="absolute top-[-10%] left-[-10%] w-[350px] h-[350px] bg-brand-600/10 rounded-full blur-[100px] pointer-events-none" />
-          <div className="absolute bottom-[-5%] right-[-10%] w-[250px] h-[250px] bg-indigo-600/8 rounded-full blur-[80px] pointer-events-none" />
-
-          {/* Brand mark */}
-          <div className="relative z-10 flex items-center gap-3 mb-12 animate-fade-in-down">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center shadow-glow-rose">
-              <FiActivity className="w-5 h-5 text-white shrink-0" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-white tracking-tight">Subscription Graveyard</p>
-              <p className="text-[11px] text-zinc-500">Financial Kill Zone Analytics</p>
-            </div>
-          </div>
-
-          {/* Headline */}
-          <div className="relative z-10 mb-10 animate-fade-in-up delay-100">
-            <p className="eyebrow mb-3">Smart Subscription Tracker</p>
-            <h2 className="text-3xl font-bold tracking-tight text-white leading-tight">
-              Stop bleeding money<br />
-              <span className="text-gradient-rose">on zombie subs</span>
-            </h2>
-            <p className="text-zinc-400 text-sm leading-relaxed mt-3">
-              Visualize your recurring spend, identify low-value subscriptions, and cancel them before they cost you another month.
-            </p>
-          </div>
-
-          {/* Mini metric preview cards */}
-          <div className="relative z-10 grid grid-cols-1 gap-3">
-            <HeroMetricCard label="Monthly Burn Rate" value="$234.50" sub="Across 12 active subscriptions" color="rose" delay={200} />
-            <HeroMetricCard label="Kill Zone Targets" value="3 subs" sub="Saving $67.00/mo if cancelled" color="indigo" delay={300} />
-            <HeroMetricCard label="Graveyard Savings" value="+$420.00/yr" sub="Already realized this year" color="emerald" delay={400} />
-          </div>
-
-          {/* Feature pills */}
-          <div className="relative z-10 mt-8 flex flex-wrap gap-2 animate-fade-in-up delay-500">
-            {[
-              { icon: FiDollarSign, text: 'Real cost tracking' },
-              { icon: FiTrendingDown, text: 'Kill Zone analysis' },
-              { icon: FiShield, text: 'Local-first & private' },
-            ].map(({ icon: Icon, text }) => (
-              <span key={text} className="flex items-center gap-1.5 px-3 py-1.5 bg-zinc-800/60 border border-zinc-700/60 rounded-full text-[11px] font-semibold text-zinc-400">
-                <Icon className="w-3 h-3 shrink-0 text-brand-400" />
-                {text}
+    <div className="min-h-[calc(100vh-8rem)] flex items-center justify-center py-6 animate-fade-in">
+      <div className="w-full max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-0 bg-white rounded-3xl overflow-hidden shadow-modal border border-[#F0E6E6]">
+        {/* Left Side: Brand Preview (Toggl Style) */}
+        <div className="hidden lg:flex lg:col-span-5 flex-col justify-between bg-[#FFF5F5] border-r border-[#F0E6E6] p-8">
+          <div>
+            <div className="flex items-center gap-2.5 mb-8">
+              <div className="w-9 h-9 rounded-xl bg-[#B02A82] text-white flex items-center justify-center shadow-xs">
+                <FiActivity className="w-5 h-5 shrink-0" />
+              </div>
+              <span className="font-extrabold text-[#2D2D2D] tracking-tight text-base">
+                Subscription Graveyard
               </span>
-            ))}
+            </div>
+
+            <div className="space-y-3">
+              <span className="badge-mauve text-xs font-bold">Time-Usage Analytics</span>
+              <h2 className="text-2xl font-extrabold text-[#2D2D2D] leading-tight">
+                วัดความคุ้มค่า<br />
+                จากเวลาใช้งานจริง
+              </h2>
+              <p className="text-xs text-[#757575] leading-relaxed">
+                เปลี่ยนการจ่ายเงินเปล่าให้เป็นเงินเก็บ ตรวจสอบว่าบริการใดจ่ายแพงแต่แทบไม่เปิดใช้ พร้อมส่งเข้าสุสานได้ทันที
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-6 border-t border-[#F0E6E6]/80">
+            <div className="flex items-center gap-2.5 text-xs text-[#5A5A5A]">
+              <FiClock className="w-4 h-4 text-[#B02A82] shrink-0" />
+              <span>คำนวณต้นทุนต่อชั่วโมง ($/hr)</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-xs text-[#5A5A5A]">
+              <FiDollarSign className="w-4 h-4 text-[#B02A82] shrink-0" />
+              <span>ตรวจจับ Kill Zone อัตโนมัติ</span>
+            </div>
+            <div className="flex items-center gap-2.5 text-xs text-[#5A5A5A]">
+              <FiShield className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>ข้อมูลเก็บในเครื่อง ปลอดภัย 100%</span>
+            </div>
           </div>
         </div>
 
-        {/* ── Right: Auth Form Panel ── */}
-        <div className="bg-zinc-900/95 border-l border-zinc-800/80 p-8 sm:p-10 flex flex-col justify-center">
-          {/* Mobile brand (visible only on sm) */}
-          <div className="flex lg:hidden items-center gap-3 mb-8">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 flex items-center justify-center">
-              <FiActivity className="w-4.5 h-4.5 text-white shrink-0" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-white tracking-tight">Subscription Graveyard</p>
-              <p className="text-[11px] text-zinc-500">Kill zombie subscriptions</p>
-            </div>
+        {/* Right Side: Login Form */}
+        <div className="lg:col-span-7 p-8 sm:p-10 flex flex-col justify-center">
+          <div className="mb-6">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-[#2D2D2D] tracking-tight">
+              เข้าสู่ระบบ (Sign In)
+            </h1>
+            <p className="text-xs text-[#757575] mt-1">
+              ใส่อีเมลและรหัสผ่านเพื่อเข้าใช้งาน หรือคลิกเปิดโหมดทดสอบได้ทันที
+            </p>
           </div>
 
-          <div className="mb-8 animate-fade-in-up">
-            <h1 className="text-2xl font-bold tracking-tight text-white">Welcome back</h1>
-            <p className="text-sm text-zinc-400 mt-1">Sign in to your account to continue</p>
-          </div>
-
-          {/* Error */}
           {error && (
-            <div className="mb-6 p-3.5 bg-rose-500/8 border border-rose-500/25 rounded-xl flex items-start gap-3 animate-fade-in">
-              <FiAlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
-              <p className="text-xs text-rose-300 font-medium leading-relaxed">{error}</p>
+            <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 rounded-xl flex items-start gap-2.5 text-xs text-rose-700 font-medium">
+              <FiAlertCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+              <span>{error}</span>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5 animate-fade-in-up delay-100">
-            {/* Email */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="label">Email Address</label>
+              <label className="label-minimal">อีเมล (Email Address)</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <FiMail className="w-4 h-4 text-zinc-500 shrink-0" />
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8A8A8A]">
+                  <FiMail className="w-4 h-4" />
                 </div>
                 <input
-                  id="email"
                   type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="input-md pl-10"
                   placeholder="name@example.com"
+                  className="input-minimal pl-10"
                 />
               </div>
             </div>
 
-            {/* Password */}
             <div>
-              <label htmlFor="password" className="label">Password</label>
+              <label className="label-minimal">รหัสผ่าน (Password)</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <FiLock className="w-4 h-4 text-zinc-500 shrink-0" />
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8A8A8A]">
+                  <FiLock className="w-4 h-4" />
                 </div>
                 <input
-                  id="password"
                   type={showPassword ? 'text' : 'password'}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="input-md pl-10 pr-10"
                   placeholder="••••••••"
-                  minLength={6}
+                  className="input-minimal pl-10 pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-zinc-500 hover:text-zinc-300 transition-colors"
-                  tabIndex={-1}
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#8A8A8A] hover:text-[#2D2D2D]"
                 >
-                  {showPassword
-                    ? <FiEyeOff className="w-4 h-4 shrink-0" />
-                    : <FiEye    className="w-4 h-4 shrink-0" />}
+                  {showPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full btn-primary text-sm py-3 mt-1 rounded-xl shadow-glow-rose"
+              className="w-full btn-berry py-3 rounded-xl text-xs font-bold"
             >
               {isSubmitting ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin shrink-0" />
-                  Signing in…
-                </>
+                <span>กำลังเข้าสู่ระบบ...</span>
               ) : (
                 <>
-                  Sign In
+                  <span>เข้าสู่ระบบ</span>
                   <FiArrowRight className="w-4 h-4 shrink-0" />
                 </>
               )}
             </button>
 
             {/* Divider */}
-            <div className="relative flex items-center justify-center my-2">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-zinc-800" />
-              </div>
-              <div className="relative bg-zinc-900 px-3 text-[11px] font-semibold uppercase tracking-wider text-zinc-600">
-                Or instant access
-              </div>
+            <div className="relative my-4 flex items-center justify-center">
+              <div className="w-full border-t border-[#F0E6E6]" />
+              <span className="absolute bg-white px-3 text-[10px] font-bold uppercase tracking-wider text-[#8A8A8A]">
+                หรือทดลองใช้งานทันที
+              </span>
             </div>
 
-            {/* Demo button */}
+            {/* Instant Demo Button */}
             <button
               type="button"
               onClick={loginAsDemo}
-              className="w-full flex items-center justify-center gap-2.5 py-3 px-4 border border-emerald-500/25 bg-emerald-500/8 hover:bg-emerald-500/14 text-emerald-400 rounded-xl text-sm font-semibold tracking-wide transition-all duration-150 active:scale-[0.98] cursor-pointer group"
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-[#B02A82]/30 bg-[#FCE7F3]/40 hover:bg-[#FCE7F3] text-[#B02A82] text-xs font-bold transition-all active:scale-[0.98]"
             >
-              <div className="w-6 h-6 rounded-md bg-emerald-500/20 flex items-center justify-center group-hover:bg-emerald-500/30 transition-colors">
-                <FiPlay className="w-3 h-3 text-emerald-400 shrink-0" />
-              </div>
-              Launch Interactive Demo
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-500 font-bold tracking-wider uppercase border border-emerald-500/20">
-                Preloaded
-              </span>
+              <FiPlay className="w-3.5 h-3.5 shrink-0" />
+              <span>เปิดโหมดทดสอบพร้อมข้อมูลจำลอง (Interactive Demo)</span>
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-zinc-800/60 text-center animate-fade-in delay-300">
-            <p className="text-xs text-zinc-500">
-              No account?{' '}
-              <Link to="/register" className="font-semibold text-brand-400 hover:text-brand-300 transition-colors">
-                Sign up free
-              </Link>
-            </p>
-          </div>
+          <p className="text-center text-xs text-[#757575] mt-6">
+            ยังไม่มีบัญชีผู้ใช้?{' '}
+            <Link to="/register" className="text-[#B02A82] font-bold hover:underline">
+              สมัครสมาชิกฟรี
+            </Link>
+          </p>
         </div>
       </div>
     </div>

@@ -79,13 +79,16 @@ export const subscriptionService = {
     if (isLocalOrNoBackend) {
       const list = authStorage.getUserSubscriptions()
       const user = authStorage.getCurrentUser()
+      const hours = typeof data.monthly_hours === 'number' ? data.monthly_hours : 15
       const newSub: Subscription = {
         id: `sub-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
         user_id: user?.id || 'demo-user-id',
         name: data.name.trim(),
         cost: Number(data.cost) || 0,
         billing_cycle: data.billing_cycle,
-        value_score: data.value_score,
+        value_score: data.value_score || 3,
+        monthly_hours: hours,
+        logo_key: data.logo_key || null,
         category: data.category?.trim() || null,
         emoji: null,
         status: 'active',
@@ -103,13 +106,16 @@ export const subscriptionService = {
     } catch {
       const list = authStorage.getUserSubscriptions()
       const user = authStorage.getCurrentUser()
+      const hours = typeof data.monthly_hours === 'number' ? data.monthly_hours : 15
       const newSub: Subscription = {
         id: `sub-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 6)}`,
         user_id: user?.id || 'demo-user-id',
         name: data.name.trim(),
         cost: Number(data.cost) || 0,
         billing_cycle: data.billing_cycle,
-        value_score: data.value_score,
+        value_score: data.value_score || 3,
+        monthly_hours: hours,
+        logo_key: data.logo_key || null,
         category: data.category?.trim() || null,
         emoji: null,
         status: 'active',
@@ -138,6 +144,8 @@ export const subscriptionService = {
         cost: data.cost !== undefined ? Number(data.cost) : current.cost,
         billing_cycle: data.billing_cycle !== undefined ? data.billing_cycle : current.billing_cycle,
         value_score: data.value_score !== undefined ? data.value_score : current.value_score,
+        monthly_hours: data.monthly_hours !== undefined ? data.monthly_hours : current.monthly_hours,
+        logo_key: data.logo_key !== undefined ? data.logo_key : current.logo_key,
         category: data.category !== undefined ? data.category?.trim() || null : current.category,
         emoji: null,
         updated_at: new Date().toISOString(),
@@ -161,6 +169,8 @@ export const subscriptionService = {
         cost: data.cost !== undefined ? Number(data.cost) : current.cost,
         billing_cycle: data.billing_cycle !== undefined ? data.billing_cycle : current.billing_cycle,
         value_score: data.value_score !== undefined ? data.value_score : current.value_score,
+        monthly_hours: data.monthly_hours !== undefined ? data.monthly_hours : current.monthly_hours,
+        logo_key: data.logo_key !== undefined ? data.logo_key : current.logo_key,
         category: data.category !== undefined ? data.category?.trim() || null : current.category,
         emoji: null,
         updated_at: new Date().toISOString(),

@@ -1,8 +1,9 @@
 /**
- * Subscription List — Staggered animated grid, floating empty state
+ * Subscription List Component — Minimal Toggl Style
+ * Clean light cards, staggered entrance, and clear empty state
  */
 import React from 'react'
-import { FiLayers } from 'react-icons/fi'
+import { FiLayers, FiPlus } from 'react-icons/fi'
 import type { Subscription } from '../../types/subscription'
 import SubscriptionCard from './SubscriptionCard'
 
@@ -12,68 +13,70 @@ interface SubscriptionListProps {
   onCancel: (subscription: Subscription) => void
   onReactivate?: (subscription: Subscription) => void
   onDelete?: (subscription: Subscription) => void
+  onAddNew?: () => void
   isLoading?: boolean
 }
 
-/* ── Skeleton card ────────────────────────────────────────── */
 function SkeletonCard() {
   return (
-    <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 overflow-hidden">
+    <div className="bg-white border border-[#F0E6E6] rounded-2xl p-5 shadow-xs animate-pulse">
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-10 h-10 rounded-xl skeleton shrink-0" />
+        <div className="w-11 h-11 rounded-2xl bg-[#FFF5F5] shrink-0" />
         <div className="flex-1 space-y-2">
-          <div className="h-3.5 skeleton w-2/3" />
-          <div className="h-2.5 skeleton w-1/3" />
+          <div className="h-4 bg-[#FFF5F5] rounded w-2/3" />
+          <div className="h-3 bg-[#FFF5F5] rounded w-1/3" />
         </div>
-        <div className="w-16 h-5 skeleton rounded" />
       </div>
-      <div className="bg-zinc-950/60 border border-zinc-800/60 rounded-lg p-3 mb-4 space-y-2">
-        <div className="h-6 skeleton w-1/2 ml-auto" />
-        <div className="h-2 skeleton w-full" />
-      </div>
-      <div className="h-2.5 skeleton w-1/3 mb-4" />
-      <div className="pt-3 border-t border-zinc-800/60 flex gap-2">
-        <div className="flex-1 h-8 skeleton rounded-lg" />
-        <div className="flex-1 h-8 skeleton rounded-lg" />
-      </div>
+      <div className="bg-[#FFF5F5] rounded-xl p-4 my-3 h-16" />
+      <div className="h-7 bg-[#FFF5F5] rounded-xl w-full" />
     </div>
   )
 }
 
 const SubscriptionList: React.FC<SubscriptionListProps> = ({
-  subscriptions, onEdit, onCancel, onReactivate, onDelete, isLoading = false,
+  subscriptions,
+  onEdit,
+  onCancel,
+  onReactivate,
+  onDelete,
+  onAddNew,
+  isLoading = false,
 }) => {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[1, 2, 3, 4, 5, 6].map((i) => <SkeletonCard key={i} />)}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <SkeletonCard key={i} />
+        ))}
       </div>
     )
   }
 
   if (subscriptions.length === 0) {
     return (
-      <div className="text-center py-20 px-4 bg-zinc-950/40 rounded-2xl border border-dashed border-zinc-800 animate-fade-in">
-        {/* Animated tombstone illustration */}
-        <div className="relative w-16 h-16 mx-auto mb-5">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-10 h-10 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-500 animate-float" style={{ animationDuration: '4s' }}>
-              <FiLayers className="w-5 h-5 shrink-0" />
-            </div>
-          </div>
-          {/* Glow under the icon */}
-          <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-2 bg-zinc-700/30 rounded-full blur-sm" />
+      <div className="text-center py-16 px-4 bg-white rounded-3xl border border-dashed border-[#E5DADA] shadow-xs animate-fade-in">
+        <div className="w-14 h-14 rounded-2xl bg-[#FFF5F5] border border-[#F7D6D0] mx-auto flex items-center justify-center text-[#B02A82] mb-3">
+          <FiLayers className="w-6 h-6 shrink-0" />
         </div>
-        <h3 className="text-sm font-bold text-white tracking-tight">No subscriptions found</h3>
-        <p className="text-xs text-zinc-500 mt-1.5 max-w-xs mx-auto leading-relaxed">
-          No subscriptions match the selected criteria. Try adjusting your filter or search, or add a new recurring expense.
+        <h3 className="text-base font-bold text-[#2D2D2D] tracking-tight">ไม่พบรายการ Subscription</h3>
+        <p className="text-xs text-[#757575] mt-1 max-w-sm mx-auto leading-relaxed">
+          ไม่มีบริการที่ตรงกับเงื่อนไขการค้นหา คุณสามารถลองปรับตัวกรองหรือเพิ่มบริการใหม่ได้ทันที
         </p>
+        {onAddNew && (
+          <button
+            onClick={onAddNew}
+            className="btn-berry mt-4 text-xs py-2 px-4 rounded-xl"
+          >
+            <FiPlus className="w-3.5 h-3.5 shrink-0" />
+            <span>เพิ่ม Subscription</span>
+          </button>
+        )}
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
       {subscriptions.map((subscription, index) => (
         <SubscriptionCard
           key={subscription.id}
@@ -82,7 +85,7 @@ const SubscriptionList: React.FC<SubscriptionListProps> = ({
           onCancel={onCancel}
           onReactivate={onReactivate}
           onDelete={onDelete}
-          animationDelay={Math.min(index * 50, 400)}
+          animationDelay={Math.min(index * 40, 300)}
         />
       ))}
     </div>

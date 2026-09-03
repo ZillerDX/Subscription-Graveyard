@@ -174,13 +174,16 @@ export const demoSubscriptionService = {
 
   create: async (data: SubscriptionCreate): Promise<Subscription> => {
     const list = getStoredDemoSubscriptions()
+    const hours = typeof data.monthly_hours === 'number' ? data.monthly_hours : 15
     const newSub: Subscription = {
       id: `demo-${Date.now()}`,
       user_id: DEMO_USER.id,
       name: data.name,
       cost: Number(data.cost) || 0,
       billing_cycle: data.billing_cycle,
-      value_score: data.value_score,
+      value_score: data.value_score || 3,
+      monthly_hours: hours,
+      logo_key: data.logo_key || null,
       category: data.category || null,
       emoji: data.emoji || null,
       status: 'active',
@@ -203,6 +206,8 @@ export const demoSubscriptionService = {
       cost: data.cost !== undefined ? Number(data.cost) : current.cost,
       billing_cycle: data.billing_cycle !== undefined ? data.billing_cycle : current.billing_cycle,
       value_score: data.value_score !== undefined ? data.value_score : current.value_score,
+      monthly_hours: data.monthly_hours !== undefined ? data.monthly_hours : current.monthly_hours,
+      logo_key: data.logo_key !== undefined ? data.logo_key : current.logo_key,
       category: data.category !== undefined ? data.category : current.category,
       emoji: data.emoji !== undefined ? data.emoji : current.emoji,
       updated_at: new Date().toISOString(),

@@ -1,13 +1,13 @@
 /**
- * Financial and Quadrant Calculation Utilities
- * Ensures mathematically sound normalization, rounding, and categorization.
+ * Financial, Usage Time & Quadrant Calculation Utilities
+ * Time-usage based evaluation: "คุณใช้เวลากับบริการนี้กี่ชั่วโมง? ถ้าน้อย = ไม่คุ้ม"
  */
 import type { Subscription } from '../types/subscription'
 import type { DashboardStats, KillZoneDataPoint, CategoryBreakdown, QuadrantType } from '../services/dashboardService'
 
-// Thresholds for Kill Zone Analysis
-export const COST_THRESHOLD = 20 // $20/month is standard divider between low & high cost
-export const VALUE_THRESHOLD = 3 // 1-2: Low Value, 3: Neutral, 4-5: High Value
+// Thresholds for Kill Zone Time-Usage Analysis
+export const COST_THRESHOLD = 20 // $20/month divider between low & high expense
+export const HOURS_THRESHOLD = 8 // 8 hours/month (approx 2 hrs/week). Less than this = underused/wasteful!
 
 /**
  * Get normalized monthly cost of a subscription
@@ -28,45 +28,77 @@ export const getYearlyCost = (sub: Subscription): number => {
 }
 
 /**
- * Classify a subscription into one of four quadrants
+ * Get estimated or configured monthly usage hours
  */
-export const classifyQuadrant = (monthlyCost: number, valueScore: number): { quadrant: QuadrantType; recommendation: string } => {
-  const isHighCost = monthlyCost >= COST_THRESHOLD
-  const isLowValue = valueScore <= 2
-  const isHighValue = valueScore >= 4
+export const getMonthlyHours = (sub: Subscription): number => {
+  if (typeof sub.monthly_hours === 'number' && !isNaN(sub.monthly_hours)) {
+    return Math.max(0, sub.monthly_hours)
+  }
+  // If legacy data has value_score (1-5), map to sensible hours:
+  const map: Record<number, number> = { 1: 1, 2: 4, 3: 15, 4: 35, 5: 60 }
+  return map[sub.value_score] || 10
+}
 
-  if (isHighCost && isLowValue) {
+/**
+ * Compute cost per hour of usage ($/hr)
+ */
+export const getCostPerHour = (monthlyCost: number, monthlyHours: number): number => {
+  const safeHours = Math.max(monthlyHours, 0.1)
+  return Math.round((monthlyCost / safeHours) * 100) / 100
+}
+
+/**
+ * Classify a subscription into one of four quadrants based on Cost & Monthly Usage Hours
+ */
+export const classifyQuadrant = (
+  monthlyCost: number,
+  monthlyHours: number
+): { quadrant: QuadrantType; recommendation: string; costPerHour: number } => {
+  const costPerHour = getCostPerHour(monthlyCost, monthlyHours)
+  const isHighCost = monthlyCost >= COST_THRESHOLD
+  const isLowUsage = monthlyHours < HOURS_THRESHOLD
+
+  if (isHighCost && isLowUsage) {
     return {
       quadrant: 'kill_zone',
-      recommendation: 'Target to Cancel! High monthly drain with poor perceived value.',
+      recommendation: `ไม่คุ้มค่าอย่างยิ่ง! จ่ายสูง ($${monthlyCost.toFixed(2)}/ด.) แต่ใช้เพียง ${monthlyHours} ชม. (ตก $${costPerHour.toFixed(2)}/ชม.) ควรยกเลิกทันที`,
+      costPerHour,
     }
   }
 
-  if (!isHighCost && isLowValue) {
+  if (!isHighCost && isLowUsage) {
     return {
       quadrant: 'silent_bleed',
-      recommendation: 'Silent Bleeder. Small recurring charge with minimal utility.',
+      recommendation: `เสี่ยงเสียเงินฟรี! ถึงราคาจะไม่แพง ($${monthlyCost.toFixed(2)}/ด.) แต่แทบไม่ได้เปิดใช้ (${monthlyHours} ชม./ด.) หากไม่จำเป็นควรยกเลิก`,
+      costPerHour,
     }
   }
 
-  if (isHighCost && isHighValue) {
+  if (isHighCost && !isLowUsage) {
     return {
       quadrant: 'premium_investment',
-      recommendation: 'Premium Investment. Expensive, but you rate it highly. Keep active.',
-    }
-  }
-
-  if (!isHighCost && isHighValue) {
-    return {
-      quadrant: 'bargain',
-      recommendation: 'High Value Bargain. Excellent satisfaction per dollar spent.',
+      recommendation: `คุ้มค่าสมราคา! ถึงจ่ายสูง ($${monthlyCost.toFixed(2)}/ด.) แต่ใช้งานอย่างคุ้มค่า (${monthlyHours} ชม./ด. ตกเพียง $${costPerHour.toFixed(2)}/ชม.)`,
+      costPerHour,
     }
   }
 
   return {
-    quadrant: 'neutral',
-    recommendation: 'Neutral Value. Average satisfaction; review periodically.',
+    quadrant: 'bargain',
+    recommendation: `คุ้มค่าเกินราคา! จ่ายน้อย ($${monthlyCost.toFixed(2)}/ด.) ใช้งานบ่อยมาก (${monthlyHours} ชม./ด. ตกเพียง $${costPerHour.toFixed(2)}/ชม.)`,
+    costPerHour,
   }
+}
+
+/**
+ * Derived 1-5 score from hours and cost for backwards compatibility and visual stars
+ */
+export const getScoreFromHoursAndCost = (monthlyCost: number, monthlyHours: number): number => {
+  const cph = getCostPerHour(monthlyCost, monthlyHours)
+  if (monthlyHours <= 2 || cph >= 8.0) return 1
+  if (monthlyHours < HOURS_THRESHOLD || cph >= 4.0) return 2
+  if (monthlyHours < 20 || cph >= 2.0) return 3
+  if (monthlyHours < 40 || cph >= 1.0) return 4
+  return 5
 }
 
 /**
@@ -78,26 +110,34 @@ export const computeDashboardStats = (subscriptions: Subscription[]): DashboardS
 
   // Total monthly burn from active subscriptions
   const monthly_burn_raw = active.reduce((sum, s) => {
-    const cost = Number(s.cost) || 0
-    return sum + (s.billing_cycle === 'monthly' ? cost : cost / 12)
+    return sum + getMonthlyCost(s)
   }, 0)
 
   const monthly_burn = Math.round(monthly_burn_raw * 100) / 100
-  // Guarantee exact consistency: yearly is always exact 12x monthly burn
   const yearly_cost = Math.round(monthly_burn * 12 * 100) / 100
+
+  // Total hours of service used per month
+  const total_monthly_hours = active.reduce((sum, s) => {
+    return sum + getMonthlyHours(s)
+  }, 0)
+
+  // Average cost per hour of usage across all active subscriptions
+  const avg_cost_per_hour = total_monthly_hours > 0
+    ? Math.round((monthly_burn / total_monthly_hours) * 100) / 100
+    : 0
 
   // Realized savings from cancelled subscriptions in the graveyard
   const realized_monthly_raw = cancelled.reduce((sum, s) => {
-    const cost = Number(s.cost) || 0
-    return sum + (s.billing_cycle === 'monthly' ? cost : cost / 12)
+    return sum + getMonthlyCost(s)
   }, 0)
   const realized_monthly_savings = Math.round(realized_monthly_raw * 100) / 100
   const realized_yearly_savings = Math.round(realized_monthly_savings * 12 * 100) / 100
 
-  // Kill Zone Waste (Active subscriptions with Cost >= $20 and Value <= 2)
+  // Kill Zone Waste (Active subscriptions with Cost >= $20 and Usage < 8 hrs)
   const killZoneSubs = active.filter((s) => {
     const m = getMonthlyCost(s)
-    return m >= COST_THRESHOLD && s.value_score <= 2
+    const h = getMonthlyHours(s)
+    return m >= COST_THRESHOLD && h < HOURS_THRESHOLD
   })
 
   const kill_zone_waste_raw = killZoneSubs.reduce((sum, s) => sum + getMonthlyCost(s), 0)
@@ -107,14 +147,23 @@ export const computeDashboardStats = (subscriptions: Subscription[]): DashboardS
   // Average Value Score
   const average_value_score =
     active.length > 0
-      ? Math.round((active.reduce((sum, s) => sum + s.value_score, 0) / active.length) * 10) / 10
+      ? Math.round(
+          (active.reduce((sum, s) => sum + getScoreFromHoursAndCost(getMonthlyCost(s), getMonthlyHours(s)), 0) /
+            active.length) *
+            10
+        ) / 10
       : 0
 
-  // Cost-Weighted Value Score: sum(value * cost) / sum(cost)
+  // Cost-Weighted Value Score
   const weighted_value_score =
     monthly_burn > 0
       ? Math.round(
-          (active.reduce((sum, s) => sum + s.value_score * getMonthlyCost(s), 0) /
+          (active.reduce(
+            (sum, s) =>
+              sum +
+              getScoreFromHoursAndCost(getMonthlyCost(s), getMonthlyHours(s)) * getMonthlyCost(s),
+            0
+          ) /
             monthly_burn) *
             10
         ) / 10
@@ -133,6 +182,8 @@ export const computeDashboardStats = (subscriptions: Subscription[]): DashboardS
     kill_zone_yearly_waste,
     average_value_score,
     weighted_value_score,
+    total_monthly_hours,
+    avg_cost_per_hour,
   }
 }
 
@@ -144,14 +195,19 @@ export const computeKillZoneData = (subscriptions: Subscription[]): KillZoneData
 
   return active.map((s) => {
     const monthlyCost = getMonthlyCost(s)
-    const { quadrant, recommendation } = classifyQuadrant(monthlyCost, s.value_score)
+    const monthlyHours = getMonthlyHours(s)
+    const { quadrant, recommendation, costPerHour } = classifyQuadrant(monthlyCost, monthlyHours)
+    const derivedScore = getScoreFromHoursAndCost(monthlyCost, monthlyHours)
 
     return {
       id: s.id,
       name: s.name,
       cost: monthlyCost,
       raw_cost: Number(s.cost) || 0,
-      value_score: s.value_score,
+      value_score: derivedScore,
+      monthly_hours: monthlyHours,
+      cost_per_hour: costPerHour,
+      logo_key: s.logo_key || null,
       category: s.category || 'Other',
       billing_cycle: s.billing_cycle,
       quadrant,
@@ -161,7 +217,7 @@ export const computeKillZoneData = (subscriptions: Subscription[]): KillZoneData
 }
 
 /**
- * Compute Category Spending Breakdown with percentage
+ * Compute Category Spending Breakdown
  */
 export const computeCategoryBreakdown = (subscriptions: Subscription[]): CategoryBreakdown[] => {
   const active = subscriptions.filter((s) => s.status === 'active')
