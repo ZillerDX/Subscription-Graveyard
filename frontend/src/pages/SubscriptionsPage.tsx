@@ -1,6 +1,7 @@
 /**
  * Subscriptions Management Page — Minimal Toggl Style
  * Telemetry, real brand logos, time-usage evaluation, and quick actions
+ * Dual-Language support (TH/EN)
  */
 import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -24,8 +25,10 @@ import SubscriptionForm from '../components/subscriptions/SubscriptionForm'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import { exportSubscriptionsToCSV } from '../utils/csvExport'
 import { getMonthlyCost, getMonthlyHours } from '../utils/calculations'
+import { useLanguage } from '../context/LanguageContext'
 
 const SubscriptionsPage: React.FC = () => {
+  const { t, language } = useLanguage()
   const queryClient = useQueryClient()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null)
@@ -79,10 +82,12 @@ const SubscriptionsPage: React.FC = () => {
       invalidateAll()
       setIsFormOpen(false)
       setEditingSubscription(null)
-      toast.success(`เพิ่ม "${data.name}" เรียบร้อยแล้ว`)
+      toast.success(
+        language === 'th' ? `เพิ่ม "${data.name}" เรียบร้อยแล้ว` : `Added "${data.name}" successfully`
+      )
     },
     onError: (error: any) => {
-      toast.error(error.message || 'เกิดข้อผิดพลาดในการสร้าง')
+      toast.error(error.message || 'Error')
     },
   })
 
@@ -94,10 +99,12 @@ const SubscriptionsPage: React.FC = () => {
       invalidateAll()
       setIsFormOpen(false)
       setEditingSubscription(null)
-      toast.success(`อัปเดต "${data.name}" เรียบร้อยแล้ว`)
+      toast.success(
+        language === 'th' ? `อัปเดต "${data.name}" เรียบร้อยแล้ว` : `Updated "${data.name}" successfully`
+      )
     },
     onError: (error: any) => {
-      toast.error(error.message || 'เกิดข้อผิดพลาดในการอัปเดต')
+      toast.error(error.message || 'Error')
     },
   })
 
@@ -107,10 +114,12 @@ const SubscriptionsPage: React.FC = () => {
     onSuccess: (data) => {
       invalidateAll()
       setConfirmDialog({ isOpen: false, subscriptionId: null, subscriptionName: null })
-      toast.success(`"${data.name}" ถูกส่งไปที่ Graveyard แล้ว`)
+      toast.success(
+        language === 'th' ? `"${data.name}" ถูกส่งไปที่ Graveyard แล้ว` : `"${data.name}" sent to Graveyard`
+      )
     },
     onError: (error: any) => {
-      toast.error(error.message || 'เกิดข้อผิดพลาดในการยกเลิก')
+      toast.error(error.message || 'Error')
     },
   })
 
@@ -119,10 +128,12 @@ const SubscriptionsPage: React.FC = () => {
     mutationFn: subscriptionService.reactivate,
     onSuccess: (data) => {
       invalidateAll()
-      toast.success(`กู้คืน "${data.name}" กลับมาใช้งานแล้ว`)
+      toast.success(
+        language === 'th' ? `กู้คืน "${data.name}" กลับมาใช้งานแล้ว` : `Restored "${data.name}" successfully`
+      )
     },
     onError: (error: any) => {
-      toast.error(error.message || 'เกิดข้อผิดพลาดในการกู้คืน')
+      toast.error(error.message || 'Error')
     },
   })
 
@@ -132,10 +143,10 @@ const SubscriptionsPage: React.FC = () => {
     onSuccess: () => {
       invalidateAll()
       setDeleteDialog({ isOpen: false, subscriptionId: null, subscriptionName: null })
-      toast.success('ลบข้อมูล Subscription ถาวรเรียบร้อย')
+      toast.success(language === 'th' ? 'ลบข้อมูล Subscription ถาวรเรียบร้อย' : 'Deleted permanently')
     },
     onError: (error: any) => {
-      toast.error(error.message || 'เกิดข้อผิดพลาดในการลบ')
+      toast.error(error.message || 'Error')
     },
   })
 
@@ -217,10 +228,10 @@ const SubscriptionsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#2D2D2D]">
-            Subscriptions
+            {t('subs.title')}
           </h1>
           <p className="text-xs sm:text-sm text-[#757575] mt-1 font-medium">
-            จัดการรายการค่าบริการรายเดือนและตรวจสอบชั่วโมงการใช้งาน
+            {t('subs.subtitle')}
           </p>
         </div>
 
@@ -229,23 +240,23 @@ const SubscriptionsPage: React.FC = () => {
             onClick={() => {
               try {
                 exportSubscriptionsToCSV(subscriptions)
-                toast.success('ส่งออกไฟล์ CSV เรียบร้อยแล้ว')
+                toast.success(language === 'th' ? 'ส่งออกไฟล์ CSV เรียบร้อยแล้ว' : 'Exported CSV successfully')
               } catch (error: any) {
-                toast.error(error.message || 'ไม่สามารถส่งออก CSV ได้')
+                toast.error(error.message || 'Export error')
               }
             }}
             disabled={subscriptions.length === 0}
             className="btn-soft text-xs py-2 px-3.5 rounded-xl shadow-xs disabled:opacity-40"
           >
             <FiDownload className="w-3.5 h-3.5 shrink-0" />
-            <span>Export CSV</span>
+            <span>{t('subs.exportCsv')}</span>
           </button>
           <button
             onClick={handleAddNew}
             className="btn-berry text-xs py-2 px-4 rounded-xl shadow-xs"
           >
             <FiPlus className="w-3.5 h-3.5 shrink-0" />
-            <span>เพิ่ม Subscription</span>
+            <span>{t('subs.add')}</span>
           </button>
         </div>
       </div>
@@ -255,7 +266,7 @@ const SubscriptionsPage: React.FC = () => {
         <div className="card-minimal p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#757575] uppercase tracking-wider">
-              บริการที่ใช้งานอยู่
+              {t('subs.activeMetric')}
             </span>
             <div className="w-7 h-7 rounded-xl bg-[#FCE7F3] text-[#B02A82] flex items-center justify-center">
               <FiLayers className="w-3.5 h-3.5" />
@@ -266,19 +277,19 @@ const SubscriptionsPage: React.FC = () => {
               {activeSubs.length}
             </div>
             <span className="text-xs text-[#8A8A8A]">
-              จากทั้งหมด {allSubscriptions.length} บริการ
+              {t('subs.activeOfTotal', { total: allSubscriptions.length })}
             </span>
           </div>
           <p className="text-xs text-[#757575] mt-1 flex items-center gap-1">
             <FiClock className="w-3 h-3 text-[#B02A82]" />
-            <span>เวลาใช้งานรวม {totalMonthlyHours} ชม./เดือน</span>
+            <span>{t('subs.totalTimeMetric', { hours: totalMonthlyHours })}</span>
           </p>
         </div>
 
         <div className="card-minimal p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-[#757575] uppercase tracking-wider">
-              ยอดจ่ายรายเดือน (Burn)
+              {t('subs.burnMetric')}
             </span>
             <div className="w-7 h-7 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
               <FiDollarSign className="w-3.5 h-3.5" />
@@ -288,17 +299,17 @@ const SubscriptionsPage: React.FC = () => {
             <div className="text-2xl font-extrabold text-[#2D2D2D] tracking-tight tabular">
               ${totalMonthlyBurn.toFixed(2)}
             </div>
-            <span className="text-xs text-[#8A8A8A]">/เดือน</span>
+            <span className="text-xs text-[#8A8A8A]">{t('card.perMonth')}</span>
           </div>
           <p className="text-xs text-[#757575] mt-1">
-            ประมาณการ ${totalYearlyCost.toFixed(2)}/ปี
+            {t('stats.yearlyEst', { val: `$${totalYearlyCost.toFixed(2)}` })}
           </p>
         </div>
 
         <div className="card-minimal p-5">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
-              เงินที่ประหยัดได้ (Graveyard)
+              {t('subs.savedMetric')}
             </span>
             <div className="w-7 h-7 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
               <FiCheckCircle className="w-3.5 h-3.5" />
@@ -308,10 +319,13 @@ const SubscriptionsPage: React.FC = () => {
             <div className="text-2xl font-extrabold text-emerald-600 tracking-tight tabular">
               +${totalMonthlySaved.toFixed(2)}
             </div>
-            <span className="text-xs text-[#8A8A8A]">/เดือน</span>
+            <span className="text-xs text-[#8A8A8A]">{t('card.perMonth')}</span>
           </div>
           <p className="text-xs text-[#757575] mt-1">
-            +${totalYearlySaved.toFixed(2)}/ปี จากการยกเลิก {cancelledSubs.length} บริการ
+            {t('subs.savedFromCount', {
+              val: `$${totalYearlySaved.toFixed(2)}`,
+              count: cancelledSubs.length,
+            })}
           </p>
         </div>
       </div>
@@ -329,7 +343,9 @@ const SubscriptionsPage: React.FC = () => {
             }`}
           >
             <FiCheckCircle className="w-3.5 h-3.5 text-emerald-600" />
-            <span>ใช้งานอยู่ ({activeSubs.length})</span>
+            <span>
+              {t('subs.filterActive')} ({activeSubs.length})
+            </span>
           </button>
           <button
             onClick={() => setStatusFilter('cancelled')}
@@ -340,7 +356,9 @@ const SubscriptionsPage: React.FC = () => {
             }`}
           >
             <FiXCircle className="w-3.5 h-3.5 text-rose-600" />
-            <span>Graveyard ({cancelledSubs.length})</span>
+            <span>
+              {t('subs.filterGraveyard')} ({cancelledSubs.length})
+            </span>
           </button>
           <button
             onClick={() => setStatusFilter('all')}
@@ -351,7 +369,9 @@ const SubscriptionsPage: React.FC = () => {
             }`}
           >
             <FiList className="w-3.5 h-3.5 text-indigo-600" />
-            <span>ทั้งหมด ({allSubscriptions.length})</span>
+            <span>
+              {t('subs.filterAll')} ({allSubscriptions.length})
+            </span>
           </button>
         </div>
 
@@ -362,7 +382,7 @@ const SubscriptionsPage: React.FC = () => {
           </div>
           <input
             type="text"
-            placeholder="ค้นหาบริการหรือหมวดหมู่..."
+            placeholder={t('subs.searchPlaceholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-9 pr-8 py-2 bg-white border border-[#F0E6E6] rounded-xl text-xs text-[#2D2D2D] placeholder-[#A09898] focus:outline-none focus:border-[#B02A82] focus:ring-2 focus:ring-[#B02A82]/10 transition-all"
@@ -408,9 +428,9 @@ const SubscriptionsPage: React.FC = () => {
           setConfirmDialog({ isOpen: false, subscriptionId: null, subscriptionName: null })
         }
         onConfirm={handleConfirmCancel}
-        title="ย้ายไปที่ Graveyard (ยกเลิกบริการ)"
-        message={`คุณแน่ใจหรือไม่ว่าต้องการยกเลิก "${confirmDialog.subscriptionName}"? บริการนี้จะถูกย้ายไปที่สุสาน Graveyard และนับเป็นเงินที่ประหยัดได้`}
-        confirmText="ยกเลิกบริการ (ส่งไปสุสาน)"
+        title={t('dialog.confirmCancelTitle')}
+        message={t('dialog.confirmCancelMsg', { name: confirmDialog.subscriptionName || '' })}
+        confirmText={t('dialog.confirmCancelBtn')}
         confirmStyle="danger"
         isLoading={cancelMutation.isPending}
       />
@@ -422,9 +442,9 @@ const SubscriptionsPage: React.FC = () => {
           setDeleteDialog({ isOpen: false, subscriptionId: null, subscriptionName: null })
         }
         onConfirm={handleConfirmDelete}
-        title="ลบข้อมูลถาวร"
-        message={`คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูล "${deleteDialog.subscriptionName}" อย่างถาวร? การกระทำนี้ไม่สามารถย้อนกลับได้`}
-        confirmText="ลบถาวร"
+        title={t('dialog.confirmDeleteTitle')}
+        message={t('dialog.confirmDeleteMsg', { name: deleteDialog.subscriptionName || '' })}
+        confirmText={t('dialog.confirmDeleteBtn')}
         confirmStyle="danger"
         isLoading={deleteMutation.isPending}
       />

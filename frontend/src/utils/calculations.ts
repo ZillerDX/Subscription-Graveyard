@@ -1,13 +1,52 @@
 /**
  * Financial, Usage Time & Quadrant Calculation Utilities
- * Time-usage based evaluation: "คุณใช้เวลากับบริการนี้กี่ชั่วโมง? ถ้าน้อย = ไม่คุ้ม"
+ * Telemetry: Daily Usage, Monthly/Yearly conversions, and Personalized Category Priority Matrix
+ *
+ * Research Benchmarks & Theoretical Foundation:
+ * 1. 50/30/20 Rule (Senator Elizabeth Warren & Amelia Warren Tyagi):
+ *    Subscriptions are discretionary "Wants" (max 30% of net income). High-priority tools that directly
+ *    generate income or health (Productivity/Fitness) are treated as semi-investments with higher cost tolerance.
+ * 2. Micro-Cost per Engagement Hour (Statista / BLS Leisure Economics):
+ *    Average benchmark leisure/entertainment cost is <$0.50-$1.00/hour. If recurring entertainment exceeds
+ *    $2.50-$3.00/hour (or under 15-20 mins/day of engagement), it is classified as a "Zombie Subscription".
+ * 3. Subscription Fatigue Index (Chase / Waterstone Financial Surveys):
+ *    Over 71% of surveyed consumers lose $50-$150/month to neglected subscriptions because they fail to
+ *    quantify their actual daily engagement against monthly billing.
  */
-import type { Subscription } from '../types/subscription'
+import type { Subscription, CategoryPriority, UserPreferences } from '../types/subscription'
 import type { DashboardStats, KillZoneDataPoint, CategoryBreakdown, QuadrantType } from '../services/dashboardService'
+import { authStorage } from '../services/authStorage'
 
-// Thresholds for Kill Zone Time-Usage Analysis
-export const COST_THRESHOLD = 20 // $20/month divider between low & high expense
-export const HOURS_THRESHOLD = 8 // 8 hours/month (approx 2 hrs/week). Less than this = underused/wasteful!
+// Standard baseline thresholds
+export const BASE_COST_THRESHOLD = 20 // $20/mo divider
+export const BASE_HOURS_THRESHOLD = 8 // 8 hrs/mo (~16 mins/day)
+
+// Daily to monthly conversion factor (365 days / 12 months)
+export const DAYS_PER_MONTH = 30.4167
+
+/**
+ * Convert daily hours to monthly hours
+ */
+export const dailyToMonthlyHours = (dailyHours: number): number => {
+  const safe = Math.max(0, dailyHours)
+  return Math.round(safe * DAYS_PER_MONTH * 10) / 10
+}
+
+/**
+ * Convert daily hours to yearly hours
+ */
+export const dailyToYearlyHours = (dailyHours: number): number => {
+  const safe = Math.max(0, dailyHours)
+  return Math.round(safe * 365 * 10) / 10
+}
+
+/**
+ * Convert monthly hours to daily hours
+ */
+export const monthlyToDailyHours = (monthlyHours: number): number => {
+  const safe = Math.max(0, monthlyHours)
+  return Math.round((safe / DAYS_PER_MONTH) * 100) / 100
+}
 
 /**
  * Get normalized monthly cost of a subscription
@@ -28,15 +67,41 @@ export const getYearlyCost = (sub: Subscription): number => {
 }
 
 /**
- * Get estimated or configured monthly usage hours
+ * Get monthly usage hours with daily fallback
  */
 export const getMonthlyHours = (sub: Subscription): number => {
   if (typeof sub.monthly_hours === 'number' && !isNaN(sub.monthly_hours)) {
     return Math.max(0, sub.monthly_hours)
   }
-  // If legacy data has value_score (1-5), map to sensible hours:
+  if (typeof sub.daily_hours === 'number' && !isNaN(sub.daily_hours)) {
+    return dailyToMonthlyHours(sub.daily_hours)
+  }
   const map: Record<number, number> = { 1: 1, 2: 4, 3: 15, 4: 35, 5: 60 }
-  return map[sub.value_score] || 10
+  return map[sub.value_score] || 15
+}
+
+/**
+ * Get estimated daily hours with monthly fallback
+ */
+export const getDailyHours = (sub: Subscription): number => {
+  if (typeof sub.daily_hours === 'number' && !isNaN(sub.daily_hours)) {
+    return Math.max(0, sub.daily_hours)
+  }
+  return monthlyToDailyHours(getMonthlyHours(sub))
+}
+
+/**
+ * Format daily hours for friendly display (e.g. "15 นาที/วัน" or "1.5 ชม./วัน")
+ */
+export const formatDailyHours = (dailyHours: number, lang: 'th' | 'en' = 'th'): string => {
+  if (dailyHours <= 0) {
+    return lang === 'th' ? '0 ชม. (แทบไม่ใช้)' : '0 hrs (Never used)'
+  }
+  if (dailyHours < 1) {
+    const mins = Math.round(dailyHours * 60)
+    return lang === 'th' ? `${mins} นาที/วัน` : `${mins} min/day`
+  }
+  return lang === 'th' ? `${dailyHours.toFixed(1)} ชม./วัน` : `${dailyHours.toFixed(1)} hrs/day`
 }
 
 /**
@@ -48,54 +113,91 @@ export const getCostPerHour = (monthlyCost: number, monthlyHours: number): numbe
 }
 
 /**
- * Classify a subscription into one of four quadrants based on Cost & Monthly Usage Hours
+ * Dynamic Thresholds calibrated by User's Category Priority:
+ * - High Priority (e.g. Work/Productivity): Tolerates up to $35/mo and requires only 5 hrs/mo (~10 mins/day).
+ * - Low Priority (e.g. Low-priority Gaming/Shopping): Cost limit $15/mo, requires at least 15 hrs/mo (~30 mins/day).
+ * - Medium Priority: Standard $20/mo and 8 hrs/mo (~16 mins/day).
+ */
+export const getCategoryThresholds = (
+  category?: string | null,
+  preferences?: UserPreferences
+): { costThreshold: number; hoursThreshold: number; priority: CategoryPriority } => {
+  const prefs = preferences || authStorage.getUserPreferences()
+  const cat = category || 'Other'
+  const priority = prefs.categoryPriorities[cat] || 'medium'
+
+  if (priority === 'high') {
+    return { costThreshold: 35, hoursThreshold: 5, priority }
+  }
+  if (priority === 'low') {
+    return { costThreshold: 15, hoursThreshold: 15, priority }
+  }
+  return { costThreshold: BASE_COST_THRESHOLD, hoursThreshold: BASE_HOURS_THRESHOLD, priority }
+}
+
+/**
+ * Classify a subscription into one of four quadrants based on Cost, Usage Hours & Personalized Priority
  */
 export const classifyQuadrant = (
   monthlyCost: number,
-  monthlyHours: number
-): { quadrant: QuadrantType; recommendation: string; costPerHour: number } => {
+  monthlyHours: number,
+  category?: string | null,
+  preferences?: UserPreferences
+): { quadrant: QuadrantType; recommendation: string; costPerHour: number; priority: CategoryPriority } => {
   const costPerHour = getCostPerHour(monthlyCost, monthlyHours)
-  const isHighCost = monthlyCost >= COST_THRESHOLD
-  const isLowUsage = monthlyHours < HOURS_THRESHOLD
+  const { costThreshold, hoursThreshold, priority } = getCategoryThresholds(category, preferences)
+
+  const isHighCost = monthlyCost >= costThreshold
+  const isLowUsage = monthlyHours < hoursThreshold
 
   if (isHighCost && isLowUsage) {
     return {
       quadrant: 'kill_zone',
-      recommendation: `ไม่คุ้มค่าอย่างยิ่ง! จ่ายสูง ($${monthlyCost.toFixed(2)}/ด.) แต่ใช้เพียง ${monthlyHours} ชม. (ตก $${costPerHour.toFixed(2)}/ชม.) ควรยกเลิกทันที`,
+      recommendation: `ไม่คุ้มค่าอย่างยิ่ง! ค่าบริการ $${monthlyCost.toFixed(2)}/ด. แต่ใช้เพียง ${monthlyHours} ชม./ด. (ตก $${costPerHour.toFixed(2)}/ชม.) เกินเกณฑ์มาตรฐานที่ยอมรับได้ แนะนำให้ยกเลิกทันที`,
       costPerHour,
+      priority,
     }
   }
 
   if (!isHighCost && isLowUsage) {
     return {
       quadrant: 'silent_bleed',
-      recommendation: `เสี่ยงเสียเงินฟรี! ถึงราคาจะไม่แพง ($${monthlyCost.toFixed(2)}/ด.) แต่แทบไม่ได้เปิดใช้ (${monthlyHours} ชม./ด.) หากไม่จำเป็นควรยกเลิก`,
+      recommendation: `เสี่ยงเป็น Silent Bleeder! ถึงราคาจะไม่สูง ($${monthlyCost.toFixed(2)}/ด.) แต่แทบไม่ได้เปิดใช้ (${monthlyHours} ชม./ด. ตก $${costPerHour.toFixed(2)}/ชม.) ควรทบทวนความจำเป็น`,
       costPerHour,
+      priority,
     }
   }
 
   if (isHighCost && !isLowUsage) {
     return {
       quadrant: 'premium_investment',
-      recommendation: `คุ้มค่าสมราคา! ถึงจ่ายสูง ($${monthlyCost.toFixed(2)}/ด.) แต่ใช้งานอย่างคุ้มค่า (${monthlyHours} ชม./ด. ตกเพียง $${costPerHour.toFixed(2)}/ชม.)`,
+      recommendation: `คุ้มค่าสมราคา! แม้จะจ่ายสูง ($${monthlyCost.toFixed(2)}/ด.) แต่เปิดใช้งานสม่ำเสมอ (${monthlyHours} ชม./ด. ตกเพียง $${costPerHour.toFixed(2)}/ชม.)`,
       costPerHour,
+      priority,
     }
   }
 
   return {
     quadrant: 'bargain',
-    recommendation: `คุ้มค่าเกินราคา! จ่ายน้อย ($${monthlyCost.toFixed(2)}/ด.) ใช้งานบ่อยมาก (${monthlyHours} ชม./ด. ตกเพียง $${costPerHour.toFixed(2)}/ชม.)`,
+    recommendation: `คุ้มค่าเกินราคา! จ่ายน้อย ($${monthlyCost.toFixed(2)}/ด.) ใช้งานบ่อยมาก (${monthlyHours} ชม./ด. ตกเพียง $${costPerHour.toFixed(2)}/ชม.) คุ้มค่าสูงสุด`,
     costPerHour,
+    priority,
   }
 }
 
 /**
- * Derived 1-5 score from hours and cost for backwards compatibility and visual stars
+ * Derived 1-5 score from hours, cost and category
  */
-export const getScoreFromHoursAndCost = (monthlyCost: number, monthlyHours: number): number => {
+export const getScoreFromHoursAndCost = (
+  monthlyCost: number,
+  monthlyHours: number,
+  category?: string | null
+): number => {
   const cph = getCostPerHour(monthlyCost, monthlyHours)
+  const { hoursThreshold } = getCategoryThresholds(category)
+
   if (monthlyHours <= 2 || cph >= 8.0) return 1
-  if (monthlyHours < HOURS_THRESHOLD || cph >= 4.0) return 2
+  if (monthlyHours < hoursThreshold || cph >= 4.0) return 2
   if (monthlyHours < 20 || cph >= 2.0) return 3
   if (monthlyHours < 40 || cph >= 1.0) return 4
   return 5
@@ -107,61 +209,53 @@ export const getScoreFromHoursAndCost = (monthlyCost: number, monthlyHours: numb
 export const computeDashboardStats = (subscriptions: Subscription[]): DashboardStats => {
   const active = subscriptions.filter((s) => s.status === 'active')
   const cancelled = subscriptions.filter((s) => s.status === 'cancelled')
+  const prefs = authStorage.getUserPreferences()
 
-  // Total monthly burn from active subscriptions
-  const monthly_burn_raw = active.reduce((sum, s) => {
-    return sum + getMonthlyCost(s)
-  }, 0)
-
+  const monthly_burn_raw = active.reduce((sum, s) => sum + getMonthlyCost(s), 0)
   const monthly_burn = Math.round(monthly_burn_raw * 100) / 100
   const yearly_cost = Math.round(monthly_burn * 12 * 100) / 100
 
-  // Total hours of service used per month
-  const total_monthly_hours = active.reduce((sum, s) => {
-    return sum + getMonthlyHours(s)
-  }, 0)
-
-  // Average cost per hour of usage across all active subscriptions
+  const total_monthly_hours = active.reduce((sum, s) => sum + getMonthlyHours(s), 0)
   const avg_cost_per_hour = total_monthly_hours > 0
     ? Math.round((monthly_burn / total_monthly_hours) * 100) / 100
     : 0
 
-  // Realized savings from cancelled subscriptions in the graveyard
-  const realized_monthly_raw = cancelled.reduce((sum, s) => {
-    return sum + getMonthlyCost(s)
-  }, 0)
+  const realized_monthly_raw = cancelled.reduce((sum, s) => sum + getMonthlyCost(s), 0)
   const realized_monthly_savings = Math.round(realized_monthly_raw * 100) / 100
   const realized_yearly_savings = Math.round(realized_monthly_savings * 12 * 100) / 100
 
-  // Kill Zone Waste (Active subscriptions with Cost >= $20 and Usage < 8 hrs)
+  // Kill Zone waste with personalized category thresholds
   const killZoneSubs = active.filter((s) => {
     const m = getMonthlyCost(s)
     const h = getMonthlyHours(s)
-    return m >= COST_THRESHOLD && h < HOURS_THRESHOLD
+    const { costThreshold, hoursThreshold } = getCategoryThresholds(s.category, prefs)
+    return m >= costThreshold && h < hoursThreshold
   })
 
   const kill_zone_waste_raw = killZoneSubs.reduce((sum, s) => sum + getMonthlyCost(s), 0)
   const kill_zone_monthly_waste = Math.round(kill_zone_waste_raw * 100) / 100
   const kill_zone_yearly_waste = Math.round(kill_zone_monthly_waste * 12 * 100) / 100
 
-  // Average Value Score
   const average_value_score =
     active.length > 0
       ? Math.round(
-          (active.reduce((sum, s) => sum + getScoreFromHoursAndCost(getMonthlyCost(s), getMonthlyHours(s)), 0) /
+          (active.reduce(
+            (sum, s) => sum + getScoreFromHoursAndCost(getMonthlyCost(s), getMonthlyHours(s), s.category),
+            0
+          ) /
             active.length) *
             10
         ) / 10
       : 0
 
-  // Cost-Weighted Value Score
   const weighted_value_score =
     monthly_burn > 0
       ? Math.round(
           (active.reduce(
             (sum, s) =>
               sum +
-              getScoreFromHoursAndCost(getMonthlyCost(s), getMonthlyHours(s)) * getMonthlyCost(s),
+              getScoreFromHoursAndCost(getMonthlyCost(s), getMonthlyHours(s), s.category) *
+                getMonthlyCost(s),
             0
           ) /
             monthly_burn) *
@@ -192,12 +286,18 @@ export const computeDashboardStats = (subscriptions: Subscription[]): DashboardS
  */
 export const computeKillZoneData = (subscriptions: Subscription[]): KillZoneDataPoint[] => {
   const active = subscriptions.filter((s) => s.status === 'active')
+  const prefs = authStorage.getUserPreferences()
 
   return active.map((s) => {
     const monthlyCost = getMonthlyCost(s)
     const monthlyHours = getMonthlyHours(s)
-    const { quadrant, recommendation, costPerHour } = classifyQuadrant(monthlyCost, monthlyHours)
-    const derivedScore = getScoreFromHoursAndCost(monthlyCost, monthlyHours)
+    const { quadrant, recommendation, costPerHour } = classifyQuadrant(
+      monthlyCost,
+      monthlyHours,
+      s.category,
+      prefs
+    )
+    const derivedScore = getScoreFromHoursAndCost(monthlyCost, monthlyHours, s.category)
 
     return {
       id: s.id,

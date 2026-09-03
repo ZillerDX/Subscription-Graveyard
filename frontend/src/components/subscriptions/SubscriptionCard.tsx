@@ -1,6 +1,6 @@
 /**
  * Subscription Card Component — Minimal Toggl Style
- * Authentic brand vector logos, usage hours telemetry, and cost-per-hour diagnosis
+ * Telemetry: Daily & Monthly Usage Hours, Cost per Hour, Real Brand Logos, and Dual-Language
  */
 import React from 'react'
 import {
@@ -18,9 +18,12 @@ import {
   getMonthlyCost,
   getYearlyCost,
   getMonthlyHours,
+  getDailyHours,
+  formatDailyHours,
   getCostPerHour,
   classifyQuadrant,
 } from '../../utils/calculations'
+import { useLanguage } from '../../context/LanguageContext'
 
 interface SubscriptionCardProps {
   subscription: Subscription
@@ -39,14 +42,17 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
   onDelete,
   animationDelay = 0,
 }) => {
+  const { t, language } = useLanguage()
+
   const cost = Number(subscription.cost) || 0
   const monthlyCost = getMonthlyCost(subscription)
   const monthlyHours = getMonthlyHours(subscription)
+  const dailyHours = getDailyHours(subscription)
   const costPerHour = getCostPerHour(monthlyCost, monthlyHours)
   const isCancelled = subscription.status === 'cancelled'
   const isYearly = subscription.billing_cycle === 'yearly'
 
-  const { quadrant } = classifyQuadrant(monthlyCost, monthlyHours)
+  const { quadrant } = classifyQuadrant(monthlyCost, monthlyHours, subscription.category)
 
   return (
     <div
@@ -78,7 +84,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                   </span>
                 )}
                 <span className="text-[11px] text-[#8A8A8A] font-medium capitalize">
-                  {isYearly ? 'รายปี (Yearly)' : 'รายเดือน (Monthly)'}
+                  {isYearly ? t('form.yearlyPlan') : t('form.monthlyPlan')}
                 </span>
               </div>
             </div>
@@ -89,12 +95,12 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
             {isCancelled ? (
               <span className="badge-rose text-[10px]">
                 <FiXCircle className="w-3 h-3" />
-                <span>ยกเลิกแล้ว</span>
+                <span>{t('card.cancelled')}</span>
               </span>
             ) : (
               <span className="badge-emerald text-[10px]">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                <span>ใช้งานอยู่</span>
+                <span>{t('card.active')}</span>
               </span>
             )}
           </div>
@@ -104,32 +110,33 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
         <div className="bg-[#FFF5F5] border border-[#F0E6E6] rounded-xl p-3.5 my-3 space-y-2.5">
           {/* Main cost row */}
           <div className="flex items-baseline justify-between">
-            <span className="text-xs text-[#757575] font-medium">ค่าบริการ</span>
+            <span className="text-xs text-[#757575] font-medium">{t('card.cost')}</span>
             <div className="text-right">
-              <span className="text-xl font-bold text-[#2D2D2D] tracking-tight tabular">
+              <span className="text-xl font-extrabold text-[#2D2D2D] tracking-tight tabular">
                 ${cost.toFixed(2)}
               </span>
-              <span className="text-xs text-[#8A8A8A] ml-1">/{isYearly ? 'ปี' : 'เดือน'}</span>
+              <span className="text-xs text-[#8A8A8A] ml-1">
+                {isYearly ? t('card.perYear') : t('card.perMonth')}
+              </span>
             </div>
           </div>
 
-          {/* Hours used & Cost per hour (New Method) */}
+          {/* Daily hours + Monthly hours + Cost per hour */}
           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#F0E6E6]/80 text-xs">
             <div className="flex items-center gap-1.5 text-[#5A5A5A]">
               <FiClock className="w-3.5 h-3.5 text-[#B02A82] shrink-0" />
               <span>
-                ใช้{' '}
-                <strong className="text-[#2D2D2D] font-bold tabular">{monthlyHours}</strong>{' '}
-                ชม./เดือน
+                <strong className="text-[#2D2D2D] font-bold tabular">
+                  {formatDailyHours(dailyHours, language)}
+                </strong>
+                <span className="text-[10px] text-[#8A8A8A] block">
+                  (~{monthlyHours} ชม./ด.)
+                </span>
               </span>
             </div>
             <div className="text-right text-[#5A5A5A]">
               <span>
-                เฉลี่ย{' '}
-                <strong className="text-[#2D2D2D] font-bold tabular">
-                  ${costPerHour.toFixed(2)}
-                </strong>
-                /ชม.
+                {t('card.avgPerHour', { val: `$${costPerHour.toFixed(2)}` })}
               </span>
             </div>
           </div>
@@ -141,27 +148,27 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
             quadrant === 'kill_zone' ? (
               <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
                 <FiAlertTriangle className="w-3.5 h-3.5 shrink-0 text-red-500" />
-                <span>ไม่คุ้มค่า! (Kill Zone) ใช้น้อยแต่จ่ายแพง</span>
+                <span>{t('diag.killZone')}</span>
               </div>
             ) : quadrant === 'silent_bleed' ? (
               <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 text-xs font-semibold">
                 <FiAlertTriangle className="w-3.5 h-3.5 shrink-0 text-amber-500" />
-                <span>เสี่ยงเสียเปล่า (ใช้น้อย ${costPerHour.toFixed(2)}/ชม.)</span>
+                <span>{t('diag.silentBleed')}</span>
               </div>
             ) : quadrant === 'premium_investment' ? (
               <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-[#FCE7F3] border border-[#FBCFE8] text-[#9D174D] text-xs font-semibold">
                 <FiCheckCircle className="w-3.5 h-3.5 shrink-0 text-[#B02A82]" />
-                <span>คุ้มค่าสมราคา (ใช้งานสม่ำเสมอ)</span>
+                <span>{t('diag.premium')}</span>
               </div>
             ) : (
               <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">
                 <FiCheckCircle className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
-                <span>คุ้มค่ามาก! (ตกเพียง ${costPerHour.toFixed(2)}/ชม.)</span>
+                <span>{t('diag.bargain')}</span>
               </div>
             )
           ) : (
             <div className="text-xs text-emerald-600 font-medium">
-              ประหยัดเงินได้ +${getYearlyCost(subscription).toFixed(2)}/ปี
+              {t('card.savedYearly', { val: `$${getYearlyCost(subscription).toFixed(2)}` })}
             </div>
           )}
         </div>
@@ -176,14 +183,14 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
               className="flex-1 btn-soft py-2 rounded-xl"
             >
               <FiEdit2 className="w-3 h-3 shrink-0" />
-              <span>แก้ไข</span>
+              <span>{t('card.edit')}</span>
             </button>
             <button
               onClick={() => onCancel(subscription)}
               className="flex-1 btn-danger-soft py-2 rounded-xl"
             >
               <FiXCircle className="w-3 h-3 shrink-0" />
-              <span>ยกเลิก (Kill)</span>
+              <span>{t('card.kill')}</span>
             </button>
           </div>
         ) : (
@@ -194,7 +201,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                 className="flex-1 btn-success-soft py-2 rounded-xl"
               >
                 <FiRefreshCw className="w-3 h-3 shrink-0" />
-                <span>กู้คืน</span>
+                <span>{t('card.restore')}</span>
               </button>
             )}
             {onDelete && (
@@ -203,7 +210,7 @@ const SubscriptionCard: React.FC<SubscriptionCardProps> = ({
                 className="flex-1 btn-soft text-red-500 hover:text-red-700 hover:bg-red-50 py-2 rounded-xl"
               >
                 <FiTrash2 className="w-3 h-3 shrink-0" />
-                <span>ลบถาวร</span>
+                <span>{t('card.delete')}</span>
               </button>
             )}
           </div>

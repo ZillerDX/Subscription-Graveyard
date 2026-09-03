@@ -1,7 +1,7 @@
 /**
  * Kill Zone 4-Quadrant Matrix Component — Minimal Toggl Style
  * Evaluation: Monthly Cost ($) vs Usage Hours (ชม./เดือน)
- * "คุณใช้เวลากับบริการนี้กี่ชั่วโมง? ถ้าน้อย = ไม่คุ้ม"
+ * Dual-Language support
  */
 import React from 'react'
 import {
@@ -16,60 +16,59 @@ import {
   Cell,
 } from 'recharts'
 import { FiCrosshair, FiAlertTriangle } from 'react-icons/fi'
-import type { KillZoneDataPoint, QuadrantType } from '../../services/dashboardService'
-import { COST_THRESHOLD, HOURS_THRESHOLD } from '../../utils/calculations'
+import type { KillZoneDataPoint } from '../../services/dashboardService'
+import { BASE_COST_THRESHOLD, BASE_HOURS_THRESHOLD } from '../../utils/calculations'
 import { BrandLogo } from '../common/BrandLogo'
+import { useLanguage } from '../../context/LanguageContext'
 
 interface KillZoneChartProps {
   data: KillZoneDataPoint[]
   isLoading?: boolean
 }
 
-const QUADRANT_CONFIG: Record<
-  QuadrantType,
-  { name: string; desc: string; color: string; bg: string; border: string }
-> = {
+const getQuadrantConfigs = (lang: 'th' | 'en') => ({
   kill_zone: {
-    name: 'Kill Zone (ไม่คุ้มค่าอย่างยิ่ง)',
-    desc: 'จ่ายแพง (≥$20) + ใช้น้อย (<8 ชม./เดือน)',
+    name: lang === 'th' ? 'Kill Zone (ไม่คุ้มค่าอย่างยิ่ง)' : 'Kill Zone (Extreme Waste)',
+    desc: lang === 'th' ? 'จ่ายแพง + ใช้น้อย (เป้าหมายยกเลิก)' : 'High cost + low engagement (Cancel target)',
     color: '#E11D48',
     bg: '#FFF1F2',
     border: '#FECDD3',
   },
   silent_bleed: {
-    name: 'Silent Bleeders (เสี่ยงเสียเปล่า)',
-    desc: 'จ่ายน้อย (<$20) + ใช้น้อย (<8 ชม./เดือน)',
+    name: lang === 'th' ? 'Silent Bleeders (เสี่ยงเสียเปล่า)' : 'Silent Bleeders (Low Usage)',
+    desc: lang === 'th' ? 'จ่ายน้อย + ใช้น้อย (ลืมยกเลิก)' : 'Low cost + low usage (Leaking cash)',
     color: '#D97706',
     bg: '#FFFBEB',
     border: '#FDE68A',
   },
   premium_investment: {
-    name: 'Worth Every Penny (สมราคา)',
-    desc: 'จ่ายสูง (≥$20) + ใช้งานบ่อย (≥8 ชม./เดือน)',
+    name: lang === 'th' ? 'Worth Every Penny (สมราคา)' : 'Worth Every Penny (Core Tool)',
+    desc: lang === 'th' ? 'จ่ายสูง + ใช้งานบ่อย (คุ้มค่า)' : 'High cost + high engagement (Keep)',
     color: '#7C3AED',
     bg: '#F5F3FF',
     border: '#DDD6FE',
   },
   bargain: {
-    name: 'Bargain Heroes (คุ้มค่ามาก)',
-    desc: 'จ่ายน้อย (<$20) + ใช้งานบ่อย (≥8 ชม./เดือน)',
+    name: lang === 'th' ? 'Bargain Heroes (คุ้มค่ามาก)' : 'Bargain Heroes (Best Value)',
+    desc: lang === 'th' ? 'จ่ายน้อย + ใช้งานหนัก (คุ้มค่าสูงสุด)' : 'Low cost + high engagement (Great ROI)',
     color: '#059669',
     bg: '#ECFDF5',
     border: '#A7F3D0',
   },
   neutral: {
-    name: 'Moderate (ปานกลาง)',
-    desc: 'ความคุ้มค่าระดับทั่วไป',
+    name: lang === 'th' ? 'Moderate (ปานกลาง)' : 'Moderate Value',
+    desc: lang === 'th' ? 'ความคุ้มค่าระดับทั่วไป' : 'Acceptable utility',
     color: '#6B7280',
     bg: '#F3F4F6',
     border: '#E5E7EB',
   },
-}
+})
 
-const CustomTooltip = ({ active, payload }: any) => {
+const CustomTooltip = ({ active, payload, lang }: any) => {
   if (!active || !payload?.length) return null
   const item: KillZoneDataPoint = payload[0].payload
-  const qConfig = QUADRANT_CONFIG[item.quadrant] || QUADRANT_CONFIG.bargain
+  const configs = getQuadrantConfigs(lang)
+  const qConfig = configs[item.quadrant] || configs.bargain
 
   return (
     <div className="bg-white border border-[#F0E6E6] rounded-2xl shadow-modal p-4 min-w-[240px] text-xs pointer-events-none animate-scale-in">
@@ -83,24 +82,30 @@ const CustomTooltip = ({ active, payload }: any) => {
 
       <div className="grid grid-cols-2 gap-2 my-3">
         <div className="bg-[#FFF5F5] rounded-xl p-2.5">
-          <span className="text-[10px] text-[#8A8A8A] block font-semibold uppercase">ค่าบริการ/เดือน</span>
+          <span className="text-[10px] text-[#8A8A8A] block font-semibold uppercase">
+            {lang === 'th' ? 'ค่าบริการ/เดือน' : 'Cost/mo'}
+          </span>
           <span className="text-base font-extrabold text-[#2D2D2D] tabular">
             ${item.cost.toFixed(2)}
           </span>
         </div>
         <div className="bg-[#FFF5F5] rounded-xl p-2.5">
-          <span className="text-[10px] text-[#8A8A8A] block font-semibold uppercase">ชั่วโมงที่ใช้</span>
+          <span className="text-[10px] text-[#8A8A8A] block font-semibold uppercase">
+            {lang === 'th' ? 'ชั่วโมงที่ใช้' : 'Usage'}
+          </span>
           <span className="text-base font-extrabold text-[#B02A82] tabular">
-            {item.monthly_hours} ชม.
+            {item.monthly_hours} {lang === 'th' ? 'ชม.' : 'hrs'}
           </span>
         </div>
       </div>
 
       <div className="pt-2 border-t border-[#F0E6E6] space-y-1">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] text-[#757575] font-medium">ต้นทุนเฉลี่ย:</span>
+          <span className="text-[11px] text-[#757575] font-medium">
+            {lang === 'th' ? 'ต้นทุนเฉลี่ย:' : 'Cost per hour:'}
+          </span>
           <span className="font-extrabold text-[#2D2D2D] tabular">
-            ${item.cost_per_hour.toFixed(2)} / ชม.
+            ${item.cost_per_hour.toFixed(2)} {lang === 'th' ? '/ ชม.' : '/ hr'}
           </span>
         </div>
         <p
@@ -115,11 +120,14 @@ const CustomTooltip = ({ active, payload }: any) => {
 }
 
 export const KillZoneChart: React.FC<KillZoneChartProps> = ({ data, isLoading = false }) => {
+  const { language } = useLanguage()
+  const configs = getQuadrantConfigs(language)
+
   if (isLoading) {
     return (
       <div className="card-minimal p-6">
         <div className="h-80 flex items-center justify-center text-[#8A8A8A] text-sm">
-          กำลังคำนวณเมทริกซ์ความคุ้มค่า...
+          {language === 'th' ? 'กำลังคำนวณเมทริกซ์ความคุ้มค่า...' : 'Calculating Value Matrix...'}
         </div>
       </div>
     )
@@ -131,9 +139,13 @@ export const KillZoneChart: React.FC<KillZoneChartProps> = ({ data, isLoading = 
         <div className="w-12 h-12 rounded-2xl bg-[#FFF5F5] border border-[#F7D6D0] mx-auto flex items-center justify-center text-[#B02A82] mb-3">
           <FiCrosshair className="w-6 h-6 shrink-0" />
         </div>
-        <h3 className="text-base font-bold text-[#2D2D2D]">ยังไม่มีข้อมูลวิเคราะห์ความคุ้มค่า</h3>
+        <h3 className="text-base font-bold text-[#2D2D2D]">
+          {language === 'th' ? 'ยังไม่มีข้อมูลวิเคราะห์ความคุ้มค่า' : 'No subscription data yet'}
+        </h3>
         <p className="text-xs text-[#757575] mt-1 max-w-sm mx-auto">
-          เพิ่ม Subscription พร้อมระบุชั่วโมงการใช้งาน เพื่อเริ่มแสดงกราฟเปรียบเทียบความคุ้มค่า
+          {language === 'th'
+            ? 'เพิ่ม Subscription พร้อมระบุชั่วโมงการใช้งาน เพื่อเริ่มแสดงกราฟเปรียบเทียบความคุ้มค่า'
+            : 'Add subscriptions with estimated usage to visualize the personalized Value Matrix'}
         </p>
       </div>
     )
@@ -157,18 +169,26 @@ export const KillZoneChart: React.FC<KillZoneChartProps> = ({ data, isLoading = 
               <FiCrosshair className="w-4 h-4" />
             </div>
             <h3 className="text-base font-bold text-[#2D2D2D] tracking-tight">
-              Kill Zone Matrix (ค่าบริการ vs ชั่วโมงการใช้งานจริง)
+              {language === 'th'
+                ? 'Kill Zone Matrix (ค่าบริการ vs ชั่วโมงการใช้งานจริง)'
+                : 'Kill Zone Matrix (Monthly Cost vs Engagement Hours)'}
             </h3>
           </div>
           <p className="text-xs text-[#757575] mt-1">
-            เกณฑ์วัดความคุ้มค่า: จ่ายแพงแต่ใช้น้อย = เสียเปล่า (Kill Zone) | จ่ายน้อยแต่ใช้บ่อย = คุ้มค่าสูงสุด (Bargain)
+            {language === 'th'
+              ? 'เกณฑ์วัดตามหลักการเงิน 50/30/20: จ่ายแพงแต่ใช้น้อย = เสียเปล่า (Kill Zone) | จ่ายน้อยใช้บ่อย = คุ้มค่าสูงสุด'
+              : 'Grounded in 50/30/20 financial benchmark: High cost + low engagement = Zombie spend'}
           </p>
         </div>
 
         {killZoneCount > 0 && (
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold shrink-0">
             <FiAlertTriangle className="w-4 h-4 shrink-0 text-rose-500" />
-            <span>พบ {killZoneCount} บริการใน Kill Zone ที่ควรยกเลิก</span>
+            <span>
+              {language === 'th'
+                ? `พบ ${killZoneCount} บริการใน Kill Zone ที่ควรยกเลิก`
+                : `${killZoneCount} subscriptions in Kill Zone`}
+            </span>
           </div>
         )}
       </div>
@@ -179,35 +199,36 @@ export const KillZoneChart: React.FC<KillZoneChartProps> = ({ data, isLoading = 
           <ScatterChart margin={{ top: 20, right: 30, bottom: 25, left: 10 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#F0E6E6" />
 
-            {/* X-Axis: Cost ($) */}
             <XAxis
               type="number"
               dataKey="cost"
-              name="ค่าบริการต่อเดือน ($)"
+              name={language === 'th' ? 'ค่าบริการต่อเดือน ($)' : 'Cost ($/mo)'}
               unit="$"
               domain={[0, maxCost]}
               stroke="#8A8A8A"
               tick={{ fontSize: 11, fill: '#8A8A8A' }}
               tickLine={{ stroke: '#E5DADA' }}
               label={{
-                value: 'ค่าบริการรายเดือน ($/mo) →',
+                value: language === 'th' ? 'ค่าบริการรายเดือน ($/mo) →' : 'Monthly Cost ($/mo) →',
                 position: 'insideBottom',
                 offset: -15,
                 style: { fontSize: 11, fill: '#757575', fontWeight: 600 },
               }}
             />
 
-            {/* Y-Axis: Hours used per month */}
             <YAxis
               type="number"
               dataKey="monthly_hours"
-              name="ชั่วโมงที่ใช้งานต่อเดือน"
+              name={language === 'th' ? 'ชั่วโมงที่ใช้ต่อเดือน' : 'Hours used'}
               domain={[0, maxHours]}
               stroke="#8A8A8A"
               tick={{ fontSize: 11, fill: '#8A8A8A' }}
               tickLine={{ stroke: '#E5DADA' }}
               label={{
-                value: 'ชั่วโมงใช้งานจริงต่อเดือน (ชม.) →',
+                value:
+                  language === 'th'
+                    ? 'ชั่วโมงใช้งานจริงต่อเดือน (ชม.) →'
+                    : 'Monthly Engagement (hrs) →',
                 angle: -90,
                 position: 'insideLeft',
                 offset: 15,
@@ -215,37 +236,45 @@ export const KillZoneChart: React.FC<KillZoneChartProps> = ({ data, isLoading = 
               }}
             />
 
-            {/* Threshold Reference Lines */}
             <ReferenceLine
-              y={HOURS_THRESHOLD}
+              y={BASE_HOURS_THRESHOLD}
               stroke="#D495A2"
               strokeDasharray="4 4"
               strokeWidth={1.5}
               label={{
-                value: `เกณฑ์ขั้นต่ำ ${HOURS_THRESHOLD} ชม./ด.`,
+                value:
+                  language === 'th'
+                    ? `เกณฑ์มาตรฐาน ${BASE_HOURS_THRESHOLD} ชม./ด.`
+                    : `Baseline ${BASE_HOURS_THRESHOLD} hrs/mo`,
                 fill: '#B87281',
                 fontSize: 10,
                 position: 'insideTopLeft',
               }}
             />
             <ReferenceLine
-              x={COST_THRESHOLD}
+              x={BASE_COST_THRESHOLD}
               stroke="#D495A2"
               strokeDasharray="4 4"
               strokeWidth={1.5}
               label={{
-                value: `เกณฑ์ราคา $${COST_THRESHOLD}/ด.`,
+                value:
+                  language === 'th'
+                    ? `เกณฑ์ราคา $${BASE_COST_THRESHOLD}/ด.`
+                    : `Cost divider $${BASE_COST_THRESHOLD}/mo`,
                 fill: '#B87281',
                 fontSize: 10,
                 position: 'insideTopRight',
               }}
             />
 
-            <Tooltip content={<CustomTooltip />} cursor={{ strokeDasharray: '3 3', stroke: '#E2B4BD' }} />
+            <Tooltip
+              content={<CustomTooltip lang={language} />}
+              cursor={{ strokeDasharray: '3 3', stroke: '#E2B4BD' }}
+            />
 
             <Scatter name="Subscriptions" data={data}>
               {data.map((entry) => {
-                const conf = QUADRANT_CONFIG[entry.quadrant] || QUADRANT_CONFIG.bargain
+                const conf = configs[entry.quadrant] || configs.bargain
                 return (
                   <Cell
                     key={entry.id}
@@ -265,10 +294,10 @@ export const KillZoneChart: React.FC<KillZoneChartProps> = ({ data, isLoading = 
       {/* Quadrant Legend Tiles */}
       <div className="mt-6 pt-4 border-t border-[#F0E6E6] grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
         {[
-          { key: 'kill_zone', count: killZoneCount, ...QUADRANT_CONFIG.kill_zone },
-          { key: 'silent_bleed', count: silentBleedCount, ...QUADRANT_CONFIG.silent_bleed },
-          { key: 'premium_investment', count: investmentCount, ...QUADRANT_CONFIG.premium_investment },
-          { key: 'bargain', count: bargainCount, ...QUADRANT_CONFIG.bargain },
+          { key: 'kill_zone', count: killZoneCount, ...configs.kill_zone },
+          { key: 'silent_bleed', count: silentBleedCount, ...configs.silent_bleed },
+          { key: 'premium_investment', count: investmentCount, ...configs.premium_investment },
+          { key: 'bargain', count: bargainCount, ...configs.bargain },
         ].map((item) => (
           <div
             key={item.key}

@@ -4,7 +4,7 @@
  * for static GitHub Pages and offline-first environments.
  */
 import type { User, LoginCredentials, RegisterCredentials, AuthToken } from '../types/auth'
-import type { Subscription } from '../types/subscription'
+import type { Subscription, UserPreferences } from '../types/subscription'
 
 interface StoredUserAccount {
   id: string
@@ -26,7 +26,8 @@ export const DEFAULT_DEMO_SUBSCRIPTIONS: Subscription[] = [
     cost: 16.99,
     billing_cycle: 'monthly',
     value_score: 4,
-    monthly_hours: 28,
+    daily_hours: 1.0,
+    monthly_hours: 30,
     logo_key: 'netflix',
     category: 'Entertainment',
     emoji: null,
@@ -41,7 +42,8 @@ export const DEFAULT_DEMO_SUBSCRIPTIONS: Subscription[] = [
     cost: 75.00,
     billing_cycle: 'monthly',
     value_score: 1,
-    monthly_hours: 1, // High cost + 1 hr = $75/hr Kill Zone!
+    daily_hours: 0.05, // ~1 hr/mo -> $75/hr Kill Zone!
+    monthly_hours: 1.5,
     logo_key: null,
     category: 'Health & Fitness',
     emoji: null,
@@ -56,7 +58,8 @@ export const DEFAULT_DEMO_SUBSCRIPTIONS: Subscription[] = [
     cost: 54.99,
     billing_cycle: 'monthly',
     value_score: 2,
-    monthly_hours: 3, // $18.33/hr Kill Zone!
+    daily_hours: 0.1, // ~3 hrs/mo -> $18.33/hr Kill Zone!
+    monthly_hours: 3,
     logo_key: 'adobe',
     category: 'Productivity',
     emoji: null,
@@ -71,7 +74,8 @@ export const DEFAULT_DEMO_SUBSCRIPTIONS: Subscription[] = [
     cost: 10.99,
     billing_cycle: 'monthly',
     value_score: 5,
-    monthly_hours: 50, // $0.22/hr Bargain!
+    daily_hours: 1.6, // ~50 hrs/mo -> $0.22/hr Bargain!
+    monthly_hours: 50,
     logo_key: 'spotify',
     category: 'Entertainment',
     emoji: null,
@@ -86,7 +90,8 @@ export const DEFAULT_DEMO_SUBSCRIPTIONS: Subscription[] = [
     cost: 20.00,
     billing_cycle: 'monthly',
     value_score: 5,
-    monthly_hours: 35, // $0.57/hr Premium Investment!
+    daily_hours: 1.2, // ~36 hrs/mo -> $0.56/hr Worth every penny!
+    monthly_hours: 36,
     logo_key: 'openai',
     category: 'Productivity',
     emoji: null,
@@ -101,7 +106,8 @@ export const DEFAULT_DEMO_SUBSCRIPTIONS: Subscription[] = [
     cost: 13.99,
     billing_cycle: 'monthly',
     value_score: 4,
-    monthly_hours: 40, // $0.35/hr Bargain!
+    daily_hours: 1.3, // ~40 hrs/mo -> $0.35/hr Bargain!
+    monthly_hours: 40,
     logo_key: 'youtube',
     category: 'Entertainment',
     emoji: null,
@@ -116,6 +122,7 @@ export const DEFAULT_DEMO_SUBSCRIPTIONS: Subscription[] = [
     cost: 139.00,
     billing_cycle: 'yearly',
     value_score: 3,
+    daily_hours: 0.4, // ~12 hrs/mo
     monthly_hours: 12,
     logo_key: 'amazon',
     category: 'Shopping',
@@ -131,7 +138,8 @@ export const DEFAULT_DEMO_SUBSCRIPTIONS: Subscription[] = [
     cost: 14.99,
     billing_cycle: 'monthly',
     value_score: 1,
-    monthly_hours: 0.5,
+    daily_hours: 0.02, // ~0.5 hr/mo
+    monthly_hours: 0.6,
     logo_key: null,
     category: 'News & Media',
     emoji: null,
@@ -351,4 +359,52 @@ export const authStorage = {
     const uid = userId || this.getCurrentUser()?.id || DEMO_USER.id
     localStorage.setItem(USER_SUBS_PREFIX + uid, JSON.stringify(subs))
   },
+
+  // User Category Priority Preferences
+  getUserPreferences(userId?: string): UserPreferences {
+    const uid = userId || this.getCurrentUser()?.id || DEMO_USER.id
+    const raw = localStorage.getItem('sg_user_prefs_' + uid)
+    if (!raw) {
+      return {
+        categoryPriorities: {
+          'Productivity': 'high',
+          'Health & Fitness': 'high',
+          'Education': 'high',
+          'Entertainment': 'medium',
+          'Shopping': 'medium',
+          'Gaming': 'low',
+          'News & Media': 'low',
+          'Professional': 'high',
+          'Other': 'medium',
+        },
+        completedSurvey: uid === DEMO_USER.id, // Demo user starts completed
+        updated_at: new Date().toISOString(),
+      }
+    }
+    try {
+      return JSON.parse(raw)
+    } catch {
+      return {
+        categoryPriorities: {
+          'Productivity': 'high',
+          'Health & Fitness': 'high',
+          'Education': 'high',
+          'Entertainment': 'medium',
+          'Shopping': 'medium',
+          'Gaming': 'low',
+          'News & Media': 'low',
+          'Professional': 'high',
+          'Other': 'medium',
+        },
+        completedSurvey: false,
+        updated_at: new Date().toISOString(),
+      }
+    }
+  },
+
+  saveUserPreferences(prefs: UserPreferences, userId?: string): void {
+    const uid = userId || this.getCurrentUser()?.id || DEMO_USER.id
+    localStorage.setItem('sg_user_prefs_' + uid, JSON.stringify(prefs))
+  },
 }
+

@@ -1,6 +1,7 @@
 /**
  * Dashboard Page — Minimal Toggl Style
  * Telemetry, Kill Zone Matrix based on usage hours, and quick cancellation action center
+ * Dual-Language support (TH/EN) & Personalized Assessment link
  */
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -14,6 +15,7 @@ import {
   FiClock,
   FiCheckCircle,
   FiXCircle,
+  FiSliders,
 } from 'react-icons/fi'
 import { dashboardService } from '../services/dashboardService'
 import { subscriptionService } from '../services/subscriptionService'
@@ -23,8 +25,10 @@ import CategoryBreakdownChart from '../components/dashboard/CategoryBreakdownCha
 import SubscriptionForm from '../components/subscriptions/SubscriptionForm'
 import { BrandLogo } from '../components/common/BrandLogo'
 import type { SubscriptionCreate } from '../types/subscription'
+import { useLanguage } from '../context/LanguageContext'
 
 const DashboardPage: React.FC = () => {
+  const { t, language } = useLanguage()
   const queryClient = useQueryClient()
   const [isFormOpen, setIsFormOpen] = useState(false)
 
@@ -54,10 +58,14 @@ const DashboardPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-kill-zone'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-category-breakdown'] })
-      toast.success(`"${data.name}" ถูกย้ายไปที่ Graveyard เรียบร้อย ประหยัดเงินทันที!`)
+      toast.success(
+        language === 'th'
+          ? `"${data.name}" ถูกย้ายไปที่ Graveyard เรียบร้อย ประหยัดเงินทันที!`
+          : `"${data.name}" moved to Graveyard!`
+      )
     },
     onError: () => {
-      toast.error('ไม่สามารถยกเลิก Subscription ได้')
+      toast.error(language === 'th' ? 'ไม่สามารถยกเลิกได้' : 'Failed to cancel')
     },
   })
 
@@ -70,10 +78,12 @@ const DashboardPage: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['dashboard-kill-zone'] })
       queryClient.invalidateQueries({ queryKey: ['dashboard-category-breakdown'] })
       setIsFormOpen(false)
-      toast.success(`เพิ่ม "${data.name}" เรียบร้อยแล้ว`)
+      toast.success(
+        language === 'th' ? `เพิ่ม "${data.name}" เรียบร้อยแล้ว` : `Added "${data.name}" successfully`
+      )
     },
     onError: (err: any) => {
-      toast.error(err.message || 'เกิดข้อผิดพลาดในการสร้าง')
+      toast.error(err.message || 'Error')
     },
   })
 
@@ -91,19 +101,26 @@ const DashboardPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#2D2D2D]">
-            Dashboard Overview
+            {t('dashboard.title')}
           </h1>
           <p className="text-xs sm:text-sm text-[#757575] mt-1 font-medium">
-            วิเคราะห์ความคุ้มค่าตามเวลาใช้งานจริง (Usage Time) และกำจัดบริการที่เสียเปล่า
+            {t('dashboard.subtitle')}
           </p>
         </div>
 
-        <div className="flex items-center gap-2.5 shrink-0">
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <Link
+            to="/assessment"
+            className="btn-soft text-xs py-2 px-3.5 rounded-xl shadow-xs flex items-center gap-1.5"
+          >
+            <FiSliders className="w-3.5 h-3.5 text-[#B02A82] shrink-0" />
+            <span>{t('dashboard.reassess')}</span>
+          </Link>
           <Link
             to="/subscriptions"
             className="btn-soft text-xs py-2 px-3.5 rounded-xl shadow-xs"
           >
-            <span>จัดการทั้งหมด</span>
+            <span>{t('dashboard.manageAll')}</span>
             <FiArrowRight className="w-3.5 h-3.5 shrink-0" />
           </Link>
           <button
@@ -111,7 +128,7 @@ const DashboardPage: React.FC = () => {
             className="btn-berry text-xs py-2 px-4 rounded-xl shadow-xs"
           >
             <FiPlus className="w-3.5 h-3.5 shrink-0" />
-            <span>เพิ่ม Subscription</span>
+            <span>{t('dashboard.addSubscription')}</span>
           </button>
         </div>
       </div>
@@ -129,16 +146,15 @@ const DashboardPage: React.FC = () => {
                   <FiTarget className="w-3.5 h-3.5" />
                 </div>
                 <h3 className="text-sm font-bold text-rose-900 tracking-tight">
-                  พบเป้าหมายที่ควรยกเลิกด่วน (Kill Zone Candidates)
+                  {t('dashboard.killCandidatesTitle')}
                 </h3>
               </div>
               <p className="text-xs text-rose-800/90 leading-relaxed">
-                คุณมี <strong className="text-rose-900 font-bold">{killCandidates.length} บริการ</strong>{' '}
-                ที่จ่ายค่าบริการสูงแต่ใช้งานน้อยมาก หากยกเลิกจะช่วยประหยัดเงินได้ถึง{' '}
-                <strong className="text-emerald-700 font-bold">
-                  ${totalPotentialMonthlySavings.toFixed(2)}/เดือน
-                </strong>{' '}
-                (${totalPotentialYearlySavings.toFixed(2)}/ปี)
+                {t('dashboard.killCandidatesDesc', {
+                  count: killCandidates.length,
+                  monthly: `$${totalPotentialMonthlySavings.toFixed(2)}`,
+                  yearly: `$${totalPotentialYearlySavings.toFixed(2)}`,
+                })}
               </p>
             </div>
 
@@ -154,14 +170,14 @@ const DashboardPage: React.FC = () => {
                       {sub.name}
                     </span>
                     <span className="text-[10px] text-[#8A8A8A]">
-                      ใช้ {sub.monthly_hours} ชม.
+                      {t('dashboard.usedHours', { hours: sub.monthly_hours })}
                     </span>
                   </div>
                   <span className="text-rose-600 font-extrabold tabular">${sub.cost.toFixed(2)}</span>
                   <button
                     onClick={() => cancelMutation.mutate(sub.id)}
                     disabled={cancelMutation.isPending}
-                    title="ส่งไป Graveyard (ยกเลิก)"
+                    title={t('dashboard.killAction')}
                     className="text-gray-400 hover:text-rose-600 p-1 transition-colors"
                   >
                     <FiXCircle className="w-4 h-4" />
@@ -191,16 +207,14 @@ const DashboardPage: React.FC = () => {
                 <FiClock className="w-3.5 h-3.5" />
               </div>
               <h4 className="text-xs font-bold text-[#2D2D2D] uppercase tracking-wider">
-                ประสิทธิภาพเวลา (Usage Efficiency)
+                {t('insight.efficiencyTitle')}
               </h4>
             </div>
             <p className="text-xs text-[#5A5A5A] leading-relaxed">
-              คุณใช้งานเฉลี่ย{' '}
-              <strong className="text-[#2D2D2D]">
-                {(stats.total_monthly_hours / stats.active_count).toFixed(1)} ชม./แอพ
-              </strong>{' '}
-              ต่อเดือน โดยมีต้นทุนการใช้งานรวมอยู่ที่{' '}
-              <strong className="text-[#B02A82]">${stats.avg_cost_per_hour.toFixed(2)} / ชม.</strong>
+              {t('insight.efficiencyDesc', {
+                hours: (stats.total_monthly_hours / stats.active_count).toFixed(1),
+                cost: `$${stats.avg_cost_per_hour.toFixed(2)}`,
+              })}
             </p>
           </div>
 
@@ -210,15 +224,13 @@ const DashboardPage: React.FC = () => {
                 <FiTrendingDown className="w-3.5 h-3.5" />
               </div>
               <h4 className="text-xs font-bold text-[#2D2D2D] uppercase tracking-wider">
-                ค่าเฉลี่ยต่อบริการ (Average Spend)
+                {t('insight.spendTitle')}
               </h4>
             </div>
             <p className="text-xs text-[#5A5A5A] leading-relaxed">
-              ค่าใช้จ่ายเฉลี่ยอยู่ที่{' '}
-              <strong className="text-[#2D2D2D]">
-                ${(stats.monthly_burn / stats.active_count).toFixed(2)}/เดือน
-              </strong>{' '}
-              ต่อหนึ่งบริการ การตัดบริการที่ไม่ได้ใช้งานช่วยลด Fixed Cost ได้อย่างมีนัยสำคัญ
+              {t('insight.spendDesc', {
+                cost: `$${(stats.monthly_burn / stats.active_count).toFixed(2)}`,
+              })}
             </p>
           </div>
 
@@ -228,14 +240,14 @@ const DashboardPage: React.FC = () => {
                 <FiCheckCircle className="w-3.5 h-3.5" />
               </div>
               <h4 className="text-xs font-bold text-[#2D2D2D] uppercase tracking-wider">
-                ผลตอบแทนจากการตัดรายจ่าย (Savings ROI)
+                {t('insight.roiTitle')}
               </h4>
             </div>
             <p className="text-xs text-[#5A5A5A] leading-relaxed">
-              คุณได้ยกเลิกไปแล้ว {stats.cancelled_count} รายการ ช่วยรักษาเงินสดในกระเป๋าได้ถึง{' '}
-              <strong className="text-emerald-600 font-bold">
-                +${stats.realized_yearly_savings.toFixed(2)} ต่อปี
-              </strong>
+              {t('insight.roiDesc', {
+                count: stats.cancelled_count,
+                cost: `$${stats.realized_yearly_savings.toFixed(2)}`,
+              })}
             </p>
           </div>
         </div>

@@ -1,5 +1,6 @@
 /**
  * Register Page — Minimal Toggl Light Style
+ * Dual-Language support
  */
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -15,22 +16,44 @@ import {
   FiCheckCircle,
 } from 'react-icons/fi'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 
-function getStrength(pw: string): { score: number; label: string; color: string } {
+function getStrength(pw: string, lang: 'th' | 'en'): { score: number; label: string; color: string } {
   let score = 0
   if (pw.length >= 6) score++
   if (pw.length >= 10) score++
   if (/[A-Z]/.test(pw)) score++
   if (/[0-9]/.test(pw)) score++
   if (/[^A-Za-z0-9]/.test(pw)) score++
-  if (score <= 1) return { score, label: 'ระดับความปลอดภัย: ต่ำ', color: 'bg-rose-500' }
-  if (score === 2) return { score, label: 'ระดับความปลอดภัย: ปานกลาง', color: 'bg-amber-500' }
-  if (score === 3) return { score, label: 'ระดับความปลอดภัย: ดี', color: 'bg-sky-500' }
-  return { score, label: 'ระดับความปลอดภัย: สูงมาก', color: 'bg-emerald-500' }
+  if (score <= 1)
+    return {
+      score,
+      label: lang === 'th' ? 'ระดับความปลอดภัย: ต่ำ' : 'Strength: Weak',
+      color: 'bg-rose-500',
+    }
+  if (score === 2)
+    return {
+      score,
+      label: lang === 'th' ? 'ระดับความปลอดภัย: ปานกลาง' : 'Strength: Fair',
+      color: 'bg-amber-500',
+    }
+  if (score === 3)
+    return {
+      score,
+      label: lang === 'th' ? 'ระดับความปลอดภัย: ดี' : 'Strength: Good',
+      color: 'bg-sky-500',
+    }
+  return {
+    score,
+    label: lang === 'th' ? 'ระดับความปลอดภัย: สูงมาก' : 'Strength: Excellent',
+    color: 'bg-emerald-500',
+  }
 }
 
 const RegisterPage: React.FC = () => {
   const { register, loginAsDemo, isLoading } = useAuth()
+  const { t, language } = useLanguage()
+
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -39,7 +62,7 @@ const RegisterPage: React.FC = () => {
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const strength = getStrength(password)
+  const strength = getStrength(password, language)
   const passwordsMatch = confirmPassword !== '' && password === confirmPassword
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,11 +70,19 @@ const RegisterPage: React.FC = () => {
     setError('')
 
     if (password !== confirmPassword) {
-      setError('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน')
+      setError(
+        language === 'th'
+          ? 'รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน'
+          : 'Passwords do not match'
+      )
       return
     }
     if (password.length < 6) {
-      setError('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร')
+      setError(
+        language === 'th'
+          ? 'รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร'
+          : 'Password must be at least 6 characters'
+      )
       return
     }
 
@@ -59,7 +90,7 @@ const RegisterPage: React.FC = () => {
     try {
       await register({ email, password })
     } catch (err: any) {
-      setError(err.message || 'การสมัครสมาชิกล้มเหลว โปรดลองอีกครั้ง')
+      setError(err.message || (language === 'th' ? 'การสมัครสมาชิกล้มเหลว' : 'Sign up failed'))
     } finally {
       setIsSubmitting(false)
     }
@@ -70,7 +101,7 @@ const RegisterPage: React.FC = () => {
       <div className="flex justify-center items-center min-h-[400px]">
         <div className="flex items-center gap-3 text-[#757575] text-sm font-medium">
           <div className="w-5 h-5 border-2 border-[#B02A82] border-t-transparent rounded-full animate-spin" />
-          <span>กำลังสร้างบัญชีผู้ใช้...</span>
+          <span>{language === 'th' ? 'กำลังสร้างบัญชีผู้ใช้...' : 'Creating account...'}</span>
         </div>
       </div>
     )
@@ -92,13 +123,26 @@ const RegisterPage: React.FC = () => {
             </div>
 
             <div className="space-y-3">
-              <span className="badge-peach text-xs font-bold">เริ่มใช้งานได้ฟรีทันที</span>
+              <span className="badge-peach text-xs font-bold">
+                {language === 'th' ? 'เริ่มใช้งานได้ฟรีทันที' : 'Free & Offline First'}
+              </span>
               <h2 className="text-2xl font-extrabold text-[#2D2D2D] leading-tight">
-                ควบคุมค่าใช้จ่าย<br />
-                อย่างชาญฉลาด
+                {language === 'th' ? (
+                  <>
+                    ควบคุมค่าใช้จ่าย<br />
+                    อย่างชาญฉลาด
+                  </>
+                ) : (
+                  <>
+                    Master Your Spend<br />
+                    With Confidence
+                  </>
+                )}
               </h2>
               <p className="text-xs text-[#757575] leading-relaxed">
-                สร้างบัญชีเพื่อบันทึกและวิเคราะห์ค่าบริการรายเดือน ไม่ต้องผูกบัตรเครดิต ข้อมูลของคุณปลอดภัยและทำงานแบบ Offline-first
+                {language === 'th'
+                  ? 'สร้างบัญชีเพื่อบันทึกและวิเคราะห์ค่าบริการรายเดือน ไม่ต้องผูกบัตรเครดิต ข้อมูลของคุณปลอดภัยและทำงานแบบ Offline-first'
+                  : 'Track and evaluate recurring subscriptions locally. No bank login or credit card required.'}
               </p>
             </div>
           </div>
@@ -106,11 +150,11 @@ const RegisterPage: React.FC = () => {
           <div className="space-y-3 pt-6 border-t border-[#F0E6E6]/80">
             <div className="flex items-center gap-2 text-xs text-[#5A5A5A]">
               <FiCheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>ตรวจจับบริการที่เปิดทิ้งไว้แต่ไม่ใช้</span>
+              <span>{language === 'th' ? 'ตรวจจับบริการที่เปิดทิ้งไว้แต่ไม่ใช้' : 'Detect forgotten zombie subs'}</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-[#5A5A5A]">
               <FiCheckCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>ส่งออกรายงานเป็นไฟล์ CSV ได้ตลอดเวลา</span>
+              <span>{language === 'th' ? 'ส่งออกรายงานเป็นไฟล์ CSV ได้ตลอดเวลา' : 'Export reports to CSV anytime'}</span>
             </div>
           </div>
         </div>
@@ -119,11 +163,9 @@ const RegisterPage: React.FC = () => {
         <div className="lg:col-span-7 p-8 sm:p-10 flex flex-col justify-center">
           <div className="mb-6">
             <h1 className="text-xl sm:text-2xl font-extrabold text-[#2D2D2D] tracking-tight">
-              สร้างบัญชีใหม่ (Create Account)
+              {t('auth.signupTitle')}
             </h1>
-            <p className="text-xs text-[#757575] mt-1">
-              กรอกข้อมูลเพื่อเริ่มต้นใช้งานระบบวิเคราะห์ความคุ้มค่า
-            </p>
+            <p className="text-xs text-[#757575] mt-1">{t('auth.signupSubtitle')}</p>
           </div>
 
           {error && (
@@ -135,7 +177,9 @@ const RegisterPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="label-minimal">อีเมล (Email Address)</label>
+              <label className="label-minimal">
+                {language === 'th' ? 'อีเมล (Email Address)' : 'Email Address'}
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8A8A8A]">
                   <FiMail className="w-4 h-4" />
@@ -152,7 +196,9 @@ const RegisterPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="label-minimal">รหัสผ่าน (Password)</label>
+              <label className="label-minimal">
+                {language === 'th' ? 'รหัสผ่าน (Password)' : 'Password'}
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8A8A8A]">
                   <FiLock className="w-4 h-4" />
@@ -162,7 +208,7 @@ const RegisterPage: React.FC = () => {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="อย่างน้อย 6 ตัวอักษร"
+                  placeholder={language === 'th' ? 'อย่างน้อย 6 ตัวอักษร' : 'At least 6 characters'}
                   minLength={6}
                   className="input-minimal pl-10 pr-10"
                 />
@@ -193,7 +239,9 @@ const RegisterPage: React.FC = () => {
             </div>
 
             <div>
-              <label className="label-minimal">ยืนยันรหัสผ่าน (Confirm Password)</label>
+              <label className="label-minimal">
+                {language === 'th' ? 'ยืนยันรหัสผ่าน (Confirm Password)' : 'Confirm Password'}
+              </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#8A8A8A]">
                   <FiLock className="w-4 h-4" />
@@ -203,7 +251,7 @@ const RegisterPage: React.FC = () => {
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="กรอกรหัสผ่านอีกครั้ง"
+                  placeholder={language === 'th' ? 'กรอกรหัสผ่านอีกครั้ง' : 'Repeat your password'}
                   className="input-minimal pl-10 pr-10"
                 />
                 <button
@@ -220,7 +268,13 @@ const RegisterPage: React.FC = () => {
                     passwordsMatch ? 'text-emerald-600' : 'text-rose-600'
                   }`}
                 >
-                  {passwordsMatch ? '✓ รหัสผ่านตรงกัน' : '✗ รหัสผ่านไม่ตรงกัน'}
+                  {passwordsMatch
+                    ? language === 'th'
+                      ? '✓ รหัสผ่านตรงกัน'
+                      : '✓ Passwords match'
+                    : language === 'th'
+                    ? '✗ รหัสผ่านไม่ตรงกัน'
+                    : '✗ Passwords do not match'}
                 </p>
               )}
             </div>
@@ -231,10 +285,10 @@ const RegisterPage: React.FC = () => {
               className="w-full btn-berry py-3 rounded-xl text-xs font-bold"
             >
               {isSubmitting ? (
-                <span>กำลังสร้างบัญชี...</span>
+                <span>...</span>
               ) : (
                 <>
-                  <span>สมัครสมาชิก</span>
+                  <span>{t('auth.signupTitle')}</span>
                   <FiArrowRight className="w-4 h-4 shrink-0" />
                 </>
               )}
@@ -243,7 +297,7 @@ const RegisterPage: React.FC = () => {
             <div className="relative my-4 flex items-center justify-center">
               <div className="w-full border-t border-[#F0E6E6]" />
               <span className="absolute bg-white px-3 text-[10px] font-bold uppercase tracking-wider text-[#8A8A8A]">
-                หรือทดลองใช้งานทันที
+                {language === 'th' ? 'หรือทดลองใช้งานทันที' : 'OR INSTANT DEMO'}
               </span>
             </div>
 
@@ -253,14 +307,14 @@ const RegisterPage: React.FC = () => {
               className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-[#B02A82]/30 bg-[#FCE7F3]/40 hover:bg-[#FCE7F3] text-[#B02A82] text-xs font-bold transition-all active:scale-[0.98]"
             >
               <FiPlay className="w-3.5 h-3.5 shrink-0" />
-              <span>เปิดโหมดทดสอบพร้อมข้อมูลจำลอง (Demo Mode)</span>
+              <span>{t('auth.demoBtn')}</span>
             </button>
           </form>
 
           <p className="text-center text-xs text-[#757575] mt-6">
-            มีบัญชีผู้ใช้อยู่แล้ว?{' '}
+            {t('auth.hasAccount')}{' '}
             <Link to="/login" className="text-[#B02A82] font-bold hover:underline">
-              เข้าสู่ระบบที่นี่
+              {t('auth.signinLink')}
             </Link>
           </p>
         </div>

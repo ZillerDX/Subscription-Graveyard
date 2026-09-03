@@ -1,6 +1,7 @@
 /**
  * Dashboard Stat Cards — Minimal Toggl Style
  * Telemetry: Monthly Burn, Usage Hours, Cost per Hour, Kill Zone Waste, Realized Savings
+ * Dual-Language support
  */
 import React from 'react'
 import {
@@ -11,6 +12,7 @@ import {
   FiTrendingUp,
 } from 'react-icons/fi'
 import type { DashboardStats } from '../../services/dashboardService'
+import { useLanguage } from '../../context/LanguageContext'
 
 interface StatsCardsProps {
   stats: DashboardStats
@@ -18,6 +20,8 @@ interface StatsCardsProps {
 }
 
 export const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false }) => {
+  const { t } = useLanguage()
+
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -49,51 +53,54 @@ export const StatsCards: React.FC<StatsCardsProps> = ({ stats, isLoading = false
 
   const cards = [
     {
-      label: 'ยอดจ่ายรายเดือน (Burn)',
+      label: t('stats.monthlyBurn'),
       value: `$${monthly_burn.toFixed(2)}`,
-      unit: '/เดือน',
-      sub: `ประมาณการ $${yearly_cost.toFixed(2)}/ปี`,
+      unit: t('stats.monthlyUnit'),
+      sub: t('stats.yearlyEst', { val: `$${yearly_cost.toFixed(2)}` }),
       icon: FiDollarSign,
       iconColor: 'text-[#B02A82]',
       iconBg: 'bg-[#FCE7F3]',
-      badge: `${active_count} บริการ`,
+      badge: t('stats.activeCount', { count: active_count }),
     },
     {
-      label: 'ชั่วโมงที่ใช้รวม (Usage)',
+      label: t('stats.totalUsage'),
       value: `${total_monthly_hours}`,
-      unit: 'ชม./เดือน',
-      sub: active_count > 0 ? `เฉลี่ย ${(total_monthly_hours / active_count).toFixed(1)} ชม./แอพ` : '0 ชม.',
+      unit: t('stats.hoursUnit'),
+      sub:
+        active_count > 0
+          ? t('stats.avgPerApp', { val: (total_monthly_hours / active_count).toFixed(1) })
+          : '0',
       icon: FiClock,
       iconColor: 'text-sky-600',
       iconBg: 'bg-sky-50',
-      badge: 'เวลารวม',
+      badge: t('stats.totalUsage'),
     },
     {
-      label: 'ต้นทุนเฉลี่ยต่อ ชม. ($/hr)',
+      label: t('stats.costPerHour'),
       value: `$${avg_cost_per_hour.toFixed(2)}`,
-      unit: '/ชม.',
-      sub: avg_cost_per_hour <= 1.0 ? 'อยู่ในเกณฑ์คุ้มค่ามาก' : 'ควรตรวจสอบแอพที่ใช้น้อย',
+      unit: t('stats.costPerHourUnit'),
+      sub: avg_cost_per_hour <= 1.0 ? t('stats.costGood') : t('stats.costReview'),
       icon: FiActivity,
       iconColor: 'text-indigo-600',
       iconBg: 'bg-indigo-50',
-      badge: 'ความคุ้มค่า',
+      badge: 'Benchmark',
     },
     {
-      label: 'เสียเปล่าใน Kill Zone',
+      label: t('stats.killZoneWaste'),
       value: `$${kill_zone_monthly_waste.toFixed(2)}`,
-      unit: '/เดือน',
-      sub: `${kill_zone_count} บริการที่แทบไม่ได้ใช้`,
+      unit: t('stats.monthlyUnit'),
+      sub: t('stats.killZoneTarget', { count: kill_zone_count }),
       icon: FiAlertTriangle,
       iconColor: 'text-rose-600',
       iconBg: 'bg-rose-50',
-      badge: kill_zone_count > 0 ? 'เป้าหมายยกเลิก' : 'ปลอดภัย',
+      badge: kill_zone_count > 0 ? t('stats.killZoneCancelTarget') : t('stats.killZoneSafe'),
       highlight: kill_zone_count > 0,
     },
     {
-      label: 'เงินที่ประหยัดได้สะสม',
+      label: t('stats.graveyardSavings'),
       value: `+$${realized_monthly_savings.toFixed(2)}`,
-      unit: '/เดือน',
-      sub: `+$${realized_yearly_savings.toFixed(2)}/ปี`,
+      unit: t('stats.monthlyUnit'),
+      sub: t('stats.graveyardYearly', { val: `$${realized_yearly_savings.toFixed(2)}` }),
       icon: FiTrendingUp,
       iconColor: 'text-emerald-600',
       iconBg: 'bg-emerald-50',

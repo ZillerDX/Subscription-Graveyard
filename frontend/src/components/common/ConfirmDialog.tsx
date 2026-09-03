@@ -4,6 +4,8 @@
 import React, { useEffect } from 'react'
 import { FiAlertTriangle, FiX } from 'react-icons/fi'
 
+import { useLanguage } from '../../context/LanguageContext'
+
 interface ConfirmDialogProps {
   isOpen: boolean
   onClose: () => void
@@ -21,10 +23,13 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onConfirm,
   title,
   message,
-  confirmText = 'ยืนยัน',
+  confirmText,
   confirmStyle = 'danger',
   isLoading = false,
 }) => {
+  const { t } = useLanguage()
+  const defaultConfirmText = confirmText || (confirmStyle === 'danger' ? t('dialog.confirmCancelBtn') : 'OK')
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && !isLoading) {
@@ -89,7 +94,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             disabled={isLoading}
             className="flex-1 btn-soft py-2.5 rounded-xl text-xs"
           >
-            ยกเลิก (Cancel)
+            {t('dialog.cancel')}
           </button>
           <button
             type="button"
@@ -101,7 +106,7 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                 : 'btn-berry'
             }`}
           >
-            {isLoading ? <span>กำลังดำเนินการ...</span> : <span>{confirmText}</span>}
+            {isLoading ? <span>...</span> : <span>{defaultConfirmText}</span>}
           </button>
         </div>
       </div>
