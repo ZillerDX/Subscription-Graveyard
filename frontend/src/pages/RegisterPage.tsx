@@ -124,7 +124,7 @@ const RegisterPage: React.FC = () => {
 
             <div className="space-y-3">
               <span className="badge-peach text-xs font-bold">
-                {language === 'th' ? 'เริ่มใช้งานได้ฟรีทันที' : 'Free & Offline First'}
+                {language === 'th' ? 'เริ่มใช้งานได้ฟรีทันที' : 'Start Free & Instantly'}
               </span>
               <h2 className="text-2xl font-extrabold text-[#2D2D2D] leading-tight">
                 {language === 'th' ? (
@@ -141,8 +141,8 @@ const RegisterPage: React.FC = () => {
               </h2>
               <p className="text-xs text-[#757575] leading-relaxed">
                 {language === 'th'
-                  ? 'สร้างบัญชีเพื่อบันทึกและวิเคราะห์ค่าบริการรายเดือน ไม่ต้องผูกบัตรเครดิต ข้อมูลของคุณปลอดภัยและทำงานแบบ Offline-first'
-                  : 'Track and evaluate recurring subscriptions locally. No bank login or credit card required.'}
+                  ? 'สร้างบัญชีเพื่อบันทึกและวิเคราะห์ค่าบริการรายเดือน ไม่ต้องผูกบัตรเครดิต พร้อมเริ่มต้นวางแผนการเงินได้ทันที'
+                  : 'Track and evaluate recurring subscriptions without connecting bank accounts or credit cards.'}
               </p>
             </div>
           </div>

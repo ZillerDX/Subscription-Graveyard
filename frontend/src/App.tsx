@@ -265,7 +265,7 @@ function AppContent() {
               <span className="font-bold text-[#4A4A4A]">Subscription Graveyard</span>
               <span>— {t('nav.tagline')}</span>
             </div>
-            <span>Minimal Light Style · Local-first & Private</span>
+            <span>Smart Subscription Tracking & Optimization</span>
           </div>
         </footer>
       )}

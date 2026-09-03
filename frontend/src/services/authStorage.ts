@@ -1,7 +1,7 @@
 /**
  * Client-Side Authentication & Isolated Multi-User Storage Engine
  * Enables fully functional Login, Register, Session Management, and per-user Subscriptions
- * for static GitHub Pages and offline-first environments.
+ * for static GitHub Pages and client-side web application.
  */
 import type { User, LoginCredentials, RegisterCredentials, AuthToken } from '../types/auth'
 import type { Subscription, UserPreferences } from '../types/subscription'

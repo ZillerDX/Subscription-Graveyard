@@ -108,7 +108,7 @@ const LoginPage: React.FC = () => {
             </div>
             <div className="flex items-center gap-2.5 text-xs text-[#5A5A5A]">
               <FiShield className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span>{language === 'th' ? 'ข้อมูลเก็บในเครื่อง ปลอดภัย 100%' : '100% Local-first & Private'}</span>
+              <span>{language === 'th' ? 'ประเมินความคุ้มค่าตามเกณฑ์เฉพาะบุคคล' : 'Personalized Value Matrix Assessment'}</span>
             </div>
           </div>
         </div>
