@@ -38,6 +38,26 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'dashboard.matrixBadgeDesc': 'อิงตามลำดับความสำคัญของหมวดหมู่และหลักการเงิน 50/30/20',
     'dashboard.reassess': 'ปรับเกณฑ์ความคุ้มค่า',
 
+    // Zone Worth vs Waste
+    'zone.matrixTitle': 'วิเคราะห์เปรียบเทียบ: Zone คุ้มค่า vs Zone ไม่คุ้มค่า',
+    'zone.matrixSubtitle': 'แยกแยะบริการที่สร้างประโยชน์จริง กับบริการที่จ่ายเงินทิ้งโดยเปล่าประโยชน์',
+    'zone.worthTitle': 'Zone คุ้มค่า (Worth It)',
+    'zone.wasteTitle': 'Zone ไม่คุ้มค่า (Waste Zone)',
+    'zone.worthBadge': 'ใช้งานคุ้มราคา',
+    'zone.wasteBadge': 'จ่ายทิ้ง / ควรยกเลิก',
+    'zone.worthDesc': 'บริการที่ใช้งานสม่ำเสมอ หรือต้นทุนเฉลี่ยต่อชั่วโมงต่ำ สมควรต่ออายุใช้งานต่อไป',
+    'zone.wasteDesc': 'บริการที่จ่ายเงินทิ้งแต่แทบไม่ได้เปิดใช้ หากยกเลิกจะช่วยประหยัดเงินได้ทันที',
+    'zone.filterAll': 'ทั้งหมด',
+    'zone.filterWaste': 'เฉพาะ Zone ไม่คุ้มค่า',
+    'zone.filterWorth': 'เฉพาะ Zone คุ้มค่า',
+    'zone.wasteMonthly': 'เงินที่จ่ายทิ้ง {val}/เดือน',
+    'zone.wasteYearly': 'สูญเปล่า {val}/ปี',
+    'zone.worthMonthly': 'ยอดจ่ายที่มีประสิทธิภาพ {val}/เดือน',
+    'zone.worthUsage': 'ใช้งานรวม {val} ชม./เดือน',
+    'zone.killBtn': 'ส่งไป Graveyard',
+    'zone.noWaste': 'ยอดเยี่ยมมาก! ไม่มีบริการที่อยู่ใน Zone ไม่คุ้มค่า',
+    'zone.noWorth': 'ยังไม่มีบริการในโซนนี้',
+
     // Stats Cards
     'stats.monthlyBurn': 'ยอดจ่ายรายเดือน (Burn)',
     'stats.monthlyUnit': '/เดือน',
@@ -197,6 +217,26 @@ const TRANSLATIONS: Record<Language, Record<string, string>> = {
     'dashboard.matrixBadge': 'Personalized Matrix',
     'dashboard.matrixBadgeDesc': 'Calibrated to your category priorities and the 50/30/20 rule',
     'dashboard.reassess': 'Customize Matrix',
+
+    // Zone Worth vs Waste
+    'zone.matrixTitle': 'Value Matrix: Worth It Zone vs Waste Zone',
+    'zone.matrixSubtitle': 'Distinguish services delivering true utility from recurring money pits',
+    'zone.worthTitle': 'Worth It Zone (Value)',
+    'zone.wasteTitle': 'Waste Zone (Not Worth It)',
+    'zone.worthBadge': 'High Engagement',
+    'zone.wasteBadge': 'Money Pit / Cancel',
+    'zone.worthDesc': 'Services with healthy engagement or low cost per hour. Worth renewing.',
+    'zone.wasteDesc': 'Services with high costs and negligible usage. Cancel to stop the bleed.',
+    'zone.filterAll': 'All Services',
+    'zone.filterWaste': 'Waste Zone Only',
+    'zone.filterWorth': 'Worth It Zone Only',
+    'zone.wasteMonthly': 'Wasted spend {val}/mo',
+    'zone.wasteYearly': 'Loss of {val}/yr',
+    'zone.worthMonthly': 'Efficient spend {val}/mo',
+    'zone.worthUsage': 'Total usage {val} hrs/mo',
+    'zone.killBtn': 'Send to Graveyard',
+    'zone.noWaste': 'Fantastic! No subscriptions are currently in the Waste Zone.',
+    'zone.noWorth': 'No subscriptions in this zone yet.',
 
     // Stats Cards
     'stats.monthlyBurn': 'Monthly Burn Rate',

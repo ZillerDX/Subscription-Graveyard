@@ -10,11 +10,9 @@ import toast from 'react-hot-toast'
 import {
   FiPlus,
   FiArrowRight,
-  FiTarget,
   FiTrendingDown,
   FiClock,
   FiCheckCircle,
-  FiXCircle,
   FiSliders,
 } from 'react-icons/fi'
 import { dashboardService } from '../services/dashboardService'
@@ -23,7 +21,6 @@ import StatsCards from '../components/dashboard/StatsCards'
 import KillZoneChart from '../components/dashboard/KillZoneChart'
 import CategoryBreakdownChart from '../components/dashboard/CategoryBreakdownChart'
 import SubscriptionForm from '../components/subscriptions/SubscriptionForm'
-import { BrandLogo } from '../components/common/BrandLogo'
 import type { SubscriptionCreate } from '../types/subscription'
 import { useLanguage } from '../context/LanguageContext'
 
@@ -87,14 +84,6 @@ const DashboardPage: React.FC = () => {
     },
   })
 
-  // Filter high-priority kill candidates (Kill Zone: high cost, low hours)
-  const killCandidates = killZoneData
-    .filter((sub) => sub.quadrant === 'kill_zone' || (sub.monthly_hours < 5 && sub.cost >= 15))
-    .sort((a, b) => b.cost - a.cost)
-
-  const totalPotentialMonthlySavings = killCandidates.reduce((sum, sub) => sum + sub.cost, 0)
-  const totalPotentialYearlySavings = Math.round(totalPotentialMonthlySavings * 12 * 100) / 100
-
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
       {/* Header */}
@@ -136,63 +125,15 @@ const DashboardPage: React.FC = () => {
       {/* Primary Financial & Usage Metric Cards */}
       {stats && <StatsCards stats={stats} isLoading={statsLoading} />}
 
-      {/* Kill Candidates Action Banner (If any detected) */}
-      {killCandidates.length > 0 && (
-        <div className="bg-rose-50/70 border border-rose-200/80 rounded-2xl p-5 sm:p-6 shadow-xs">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center">
-                  <FiTarget className="w-3.5 h-3.5" />
-                </div>
-                <h3 className="text-sm font-bold text-rose-900 tracking-tight">
-                  {t('dashboard.killCandidatesTitle')}
-                </h3>
-              </div>
-              <p className="text-xs text-rose-800/90 leading-relaxed">
-                {t('dashboard.killCandidatesDesc', {
-                  count: killCandidates.length,
-                  monthly: `$${totalPotentialMonthlySavings.toFixed(2)}`,
-                  yearly: `$${totalPotentialYearlySavings.toFixed(2)}`,
-                })}
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              {killCandidates.slice(0, 3).map((sub) => (
-                <div
-                  key={sub.id}
-                  className="flex items-center gap-2.5 bg-white border border-rose-200 px-3 py-1.5 rounded-xl text-xs shadow-xs"
-                >
-                  <BrandLogo logoKey={sub.logo_key} name={sub.name} className="w-6 h-6 rounded-lg" size={12} />
-                  <div className="min-w-0">
-                    <span className="font-bold text-[#2D2D2D] truncate block max-w-[100px] leading-tight">
-                      {sub.name}
-                    </span>
-                    <span className="text-[10px] text-[#8A8A8A]">
-                      {t('dashboard.usedHours', { hours: sub.monthly_hours })}
-                    </span>
-                  </div>
-                  <span className="text-rose-600 font-extrabold tabular">${sub.cost.toFixed(2)}</span>
-                  <button
-                    onClick={() => cancelMutation.mutate(sub.id)}
-                    disabled={cancelMutation.isPending}
-                    title={t('dashboard.killAction')}
-                    className="text-gray-400 hover:text-rose-600 p-1 transition-colors"
-                  >
-                    <FiXCircle className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Main Visualizations Grid */}
       <div className="grid grid-cols-1 gap-6">
-        {/* Kill Zone Scatter Plot */}
-        <KillZoneChart data={killZoneData} isLoading={killZoneLoading} />
+        {/* Value Zones Matrix (Zone คุ้มค่า vs Zone ไม่คุ้มค่า) */}
+        <KillZoneChart
+          data={killZoneData}
+          isLoading={killZoneLoading}
+          onCancel={(id) => cancelMutation.mutate(id)}
+          isCancelling={cancelMutation.isPending}
+        />
 
         {/* Category Breakdown Progress */}
         <CategoryBreakdownChart data={categoryData} isLoading={categoryLoading} />

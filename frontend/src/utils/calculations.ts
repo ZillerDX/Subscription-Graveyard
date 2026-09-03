@@ -138,12 +138,29 @@ export const getCategoryThresholds = (
 /**
  * Classify a subscription into one of four quadrants based on Cost, Usage Hours & Personalized Priority
  */
+export type ValueZone = 'worth' | 'waste'
+
+export const isWasteZone = (quadrant: QuadrantType): boolean =>
+  quadrant === 'kill_zone' || quadrant === 'silent_bleed'
+
+export const isWorthItZone = (quadrant: QuadrantType): boolean =>
+  quadrant === 'bargain' || quadrant === 'premium_investment'
+
+/**
+ * Classify a subscription into one of four quadrants and a primary Zone (Worth vs Waste)
+ */
 export const classifyQuadrant = (
   monthlyCost: number,
   monthlyHours: number,
   category?: string | null,
   preferences?: UserPreferences
-): { quadrant: QuadrantType; recommendation: string; costPerHour: number; priority: CategoryPriority } => {
+): {
+  quadrant: QuadrantType
+  zone: ValueZone
+  recommendation: string
+  costPerHour: number
+  priority: CategoryPriority
+} => {
   const costPerHour = getCostPerHour(monthlyCost, monthlyHours)
   const { costThreshold, hoursThreshold, priority } = getCategoryThresholds(category, preferences)
 
@@ -153,6 +170,7 @@ export const classifyQuadrant = (
   if (isHighCost && isLowUsage) {
     return {
       quadrant: 'kill_zone',
+      zone: 'waste',
       recommendation: `ไม่คุ้มค่าอย่างยิ่ง! ค่าบริการ $${monthlyCost.toFixed(2)}/ด. แต่ใช้เพียง ${monthlyHours} ชม./ด. (ตก $${costPerHour.toFixed(2)}/ชม.) เกินเกณฑ์มาตรฐานที่ยอมรับได้ แนะนำให้ยกเลิกทันที`,
       costPerHour,
       priority,
@@ -162,6 +180,7 @@ export const classifyQuadrant = (
   if (!isHighCost && isLowUsage) {
     return {
       quadrant: 'silent_bleed',
+      zone: 'waste',
       recommendation: `เสี่ยงเป็น Silent Bleeder! ถึงราคาจะไม่สูง ($${monthlyCost.toFixed(2)}/ด.) แต่แทบไม่ได้เปิดใช้ (${monthlyHours} ชม./ด. ตก $${costPerHour.toFixed(2)}/ชม.) ควรทบทวนความจำเป็น`,
       costPerHour,
       priority,
@@ -171,6 +190,7 @@ export const classifyQuadrant = (
   if (isHighCost && !isLowUsage) {
     return {
       quadrant: 'premium_investment',
+      zone: 'worth',
       recommendation: `คุ้มค่าสมราคา! แม้จะจ่ายสูง ($${monthlyCost.toFixed(2)}/ด.) แต่เปิดใช้งานสม่ำเสมอ (${monthlyHours} ชม./ด. ตกเพียง $${costPerHour.toFixed(2)}/ชม.)`,
       costPerHour,
       priority,
@@ -179,6 +199,7 @@ export const classifyQuadrant = (
 
   return {
     quadrant: 'bargain',
+    zone: 'worth',
     recommendation: `คุ้มค่าเกินราคา! จ่ายน้อย ($${monthlyCost.toFixed(2)}/ด.) ใช้งานบ่อยมาก (${monthlyHours} ชม./ด. ตกเพียง $${costPerHour.toFixed(2)}/ชม.) คุ้มค่าสูงสุด`,
     costPerHour,
     priority,
