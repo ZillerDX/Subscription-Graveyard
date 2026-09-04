@@ -1,273 +1,135 @@
-# 💸 Subscription Graveyard
+# ⚰️ Subscription Graveyard
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-brightgreen?style=for-the-badge&logo=github)](https://zillerdx.github.io/Subscription-Graveyard/)
 [![GitHub Actions](https://img.shields.io/badge/Deployment-GitHub%20Pages%20Actions-blue?style=for-the-badge&logo=githubactions)](https://github.com/ZillerDX/Subscription-Graveyard/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
-> 🌐 **Live Demo:** [https://zillerdx.github.io/Subscription-Graveyard/](https://zillerdx.github.io/Subscription-Graveyard/)  
-> *(เปิดทดลองใช้งานได้ทันที มี **Interactive Demo Mode** ให้ทดสอบฟีเจอร์ Dashboard, Kill Zone Chart, และการจัดการ Subscriptions ในตัว)*
+> 👉 **Live Application**: [https://zillerdx.github.io/Subscription-Graveyard/](https://zillerdx.github.io/Subscription-Graveyard/)  
+> *(เปิดทดลองใช้งานได้ทันที มี **Interactive Demo Mode** ให้ทดลองเล่นฟีเจอร์ทั้งหมดได้ทันทีโดยไม่ต้องติดตั้งหรือผูกบัตรเครดิต)*
 
-A modern web application to track, analyze, and manage your recurring subscriptions. Kill the zombie subscriptions that drain your wallet!
-
-## 📖 About
-
-Subscription Graveyard helps you take control of your recurring expenses by providing:
-
-- **Dashboard Analytics** - Visualize your monthly burn rate and spending patterns
-- **Kill Zone Chart** - Identify high-cost, low-value subscriptions that should be cancelled
-- **Smart Management** - Track, rate, and manage all your subscriptions in one place
-- **Savings Insights** - See how much you can save by cancelling unnecessary subscriptions
-
-## 🚀 Tech Stack
-
-**Frontend:**
-- React 18 + TypeScript
-- Vite
-- Tailwind CSS
-- Recharts (data visualization)
-- React Query
-
-**Backend:**
-- FastAPI (Python 3.11+)
-- PostgreSQL
-- SQLAlchemy 2.0
-- Alembic (migrations)
-- JWT authentication
-
-## 📋 Prerequisites
-
-Before running this project, make sure you have:
-
-- **Python 3.11+** installed
-- **Node.js 18+** and npm installed
-- **Docker Desktop** installed and running
-- **Git** installed
-
-## 🔧 Installation & Setup
-
-### 1. Clone the Repository
-
-```bash
-git clone https://github.com/ZillerDX/Subscription-Graveyard.git
-cd Subscription-Graveyard
-```
-
-### 2. Start the Database
-
-Make sure Docker Desktop is running, then:
-
-```bash
-docker-compose up -d postgres
-```
-
-This will start a PostgreSQL database on port 5432.
-
-### 3. Setup Backend
-
-```bash
-cd backend
-
-# Create virtual environment
-python -m venv venv
-
-# Activate virtual environment
-# On Windows:
-venv\Scripts\activate
-# On Mac/Linux:
-source venv/bin/activate
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Create .env file
-copy ..\.env.backend.example .env
-# On Mac/Linux: cp ../.env.backend.example .env
-
-# Run database migrations
-alembic upgrade head
-
-# Start the backend server
-uvicorn app.main:app --reload
-```
-
-Backend will be running at: **http://localhost:8000**
-
-API documentation: **http://localhost:8000/docs**
-
-### 4. Setup Frontend
-
-Open a new terminal:
-
-```bash
-cd frontend
-
-# Install dependencies
-npm install
-
-# Create .env file
-copy ..\.env.frontend.example .env
-# On Mac/Linux: cp ../.env.frontend.example .env
-
-# Start the development server
-npm run dev
-```
-
-Frontend will be running at: **http://localhost:5173**
-
-## 💻 How to Use
-
-### First Time Setup
-
-1. **Open the app** at http://localhost:5173
-2. **Create an account** using the Register page
-3. **Login** with your credentials
-
-### Adding Subscriptions
-
-1. Click **"Add New Subscription"** button
-2. Choose from popular platforms or create custom subscription
-3. Enter the cost and billing cycle
-4. **Rate the value** using the star system (1-5 stars)
-5. Select a category
-6. Click **"Add Subscription"**
-
-### Managing Subscriptions
-
-**View Dashboard:**
-- See your total monthly burn rate
-- View yearly cost projection
-- Check the Kill Zone chart to identify subscriptions to cancel
-- See spending by category
-
-**Manage Subscriptions:**
-- Navigate to "My Subscriptions" page
-- **Edit** subscriptions to update details or value ratings
-- **Cancel** subscriptions you want to stop
-- **Reactivate** cancelled subscriptions if needed
-- **Delete Forever** to permanently remove cancelled subscriptions
-
-### Understanding the Kill Zone Chart
-
-The chart plots your subscriptions based on:
-- **X-axis**: Monthly cost
-- **Y-axis**: Value score (1-5 stars)
-
-**Color Zones:**
-- 🔴 **Red (Kill Zone)**: High cost + Low value → Cancel these!
-- 🟠 **Orange**: High cost + High value → Expensive but worth it
-- 🟡 **Yellow**: Low cost + Low value → Consider if needed
-- 🟢 **Green**: Low cost + High value → Best subscriptions!
-
-## 📱 Features
-
-- ✅ User authentication (register/login/logout)
-- ✅ Add, edit, cancel, and reactivate subscriptions
-- ✅ Interactive dashboard with analytics
-- ✅ Kill Zone visualization
-- ✅ Category breakdown
-- ✅ Value rating system with stars
-- ✅ Monthly and yearly cost calculations
-- ✅ Identify kill candidates (low-value subscriptions)
-- ✅ Track potential savings
-
-## 🛠️ Development
-
-### Running Tests
-
-**Backend:**
-```bash
-cd backend
-pytest
-```
-
-**Frontend:**
-```bash
-cd frontend
-npm test
-```
-
-### Project Structure
-
-```
-Subscription-Graveyard/
-├── backend/
-│   ├── app/
-│   │   ├── api/v1/         # API endpoints
-│   │   ├── core/           # Config, security, database
-│   │   ├── models/         # Database models
-│   │   ├── schemas/        # Pydantic schemas
-│   │   └── services/       # Business logic
-│   ├── alembic/            # Database migrations
-│   └── requirements.txt
-├── frontend/
-│   ├── src/
-│   │   ├── components/     # React components
-│   │   ├── pages/          # Page components
-│   │   ├── services/       # API client
-│   │   └── context/        # React context
-│   └── package.json
-└── docker-compose.yml      # Database setup
-```
-
-## 🌐 API Endpoints
-
-### Authentication
-- `POST /api/v1/auth/register` - Create account
-- `POST /api/v1/auth/login` - Login
-- `GET /api/v1/auth/me` - Get current user
-
-### Subscriptions
-- `GET /api/v1/subscriptions` - List all subscriptions
-- `POST /api/v1/subscriptions` - Create subscription
-- `PUT /api/v1/subscriptions/:id` - Update subscription
-- `PATCH /api/v1/subscriptions/:id/cancel` - Cancel subscription
-- `PATCH /api/v1/subscriptions/:id/reactivate` - Reactivate subscription
-- `DELETE /api/v1/subscriptions/:id` - Delete subscription
-
-### Dashboard
-- `GET /api/v1/dashboard/stats` - Get statistics
-- `GET /api/v1/dashboard/kill-zone` - Get Kill Zone data
-- `GET /api/v1/dashboard/category-breakdown` - Get spending by category
-
-Full API documentation available at: http://localhost:8000/docs
-
-## 🔐 Security
-
-- Passwords are hashed using bcrypt
-- JWT-based authentication
-- User data is isolated and private
-- CORS protection enabled
-- SQL injection prevention via SQLAlchemy ORM
-
-## 📝 Environment Variables
-
-**Backend (.env):**
-```
-DATABASE_URL=postgresql://subgraveyard:dev_password_123@localhost:5432/subscription_graveyard_dev
-JWT_SECRET_KEY=your-secret-key
-JWT_ALGORITHM=HS256
-JWT_EXPIRATION_MINUTES=1440
-CORS_ORIGINS=http://localhost:5173
-ENVIRONMENT=development
-```
-
-**Frontend (.env):**
-```
-VITE_API_BASE_URL=http://localhost:8000
-```
-
-## 🤝 Contributing
-
-This is a personal project. Feel free to fork and modify for your own use.
-
-## 📄 License
-
-This project is open source and available under the MIT License.
-
-## 👤 Author
-
-**ZillerDX**
-- GitHub: [@ZillerDX](https://github.com/ZillerDX)
+A minimal, telemetry-driven subscription optimization web application. Calculate true cost per engagement hour, identify wasteful zombie subscriptions, and evaluate value across **Zone คุ้มค่า (Worth It)** vs **Zone ไม่คุ้มค่า (Waste Zone)**.
 
 ---
 
-**Built to help you kill your zombie subscriptions and save money!** 💰
+## 📌 Overview & Key Features
+
+- ⏱️ **Daily Usage Engine (ชั่วโมงต่อวัน)**: ระบุเวลาใช้งานเฉลี่ยต่อวัน (ชม./วัน หรือ นาที/วัน) ระบบคำนวณแปลงเป็นรายเดือน ($\times 30.4$) และรายปี ($\times 365$) พร้อมแสดงต้นทุนเฉลี่ยต่อชั่วโมง ($/hr) แบบ Real-time
+- 📊 **Binary Value Matrix (Zone คุ้มค่า vs Zone ไม่คุ้มค่า)**: แยกแยะบริการออกเป็น 2 โซนชัดเจน
+  - 🟢 **Zone คุ้มค่า (Worth It Zone)**: บริการที่ใช้งานสม่ำเสมอ หรือต้นทุนต่อชั่วโมงต่ำ คุ้มค่าสมควรต่ออายุ
+  - 🔴 **Zone ไม่คุ้มค่า (Waste Zone)**: บริการที่จ่ายเงินทิ้งแต่แทบไม่เปิดใช้ พร้อมปุ่มด่วน **"ส่งไป Graveyard"** เพื่อหยุดรายจ่ายรั่วไหลทันที
+- 🎯 **Personalized Value Assessment**: ปรับเกณฑ์ความคุ้มค่าเฉพาะบุคคล อิงตามหลักการเงิน **50/30/20** และเกณฑ์ **Cost-per-engagement hour** ของสื่อบันเทิงและซอฟต์แวร์
+- 🏷️ **Real Brand Vector Logos**: โลโก้เวกเตอร์แท้ของบริการยอดนิยม (YouTube, Netflix, Spotify, ChatGPT, Adobe, etc.) พร้อมพรีเซ็ตกรอกข้อมูลอัตโนมัติ
+- 🌐 **Dual-Language System**: สลับภาษา **ไทย (TH 🇹🇭) / English (EN 🇺🇸)** ได้ทุกหน้าแบบไม่เพี้ยน
+- 📥 **Export to CSV**: ส่งออกรายการค่าใช้จ่ายและเวลาใช้งานเป็นไฟล์ CSV ได้ทันที
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technologies |
+| :--- | :--- |
+| **Frontend** | React 18, TypeScript, Vite 5, Tailwind CSS, Recharts, TanStack Query v5, React Icons (`fi` + `si`), React Hot Toast |
+| **Backend (Optional API)** | FastAPI (Python 3.11+), PostgreSQL, SQLAlchemy 2.0, Alembic, Pydantic v2, Pytest |
+| **Storage & Auth** | Client-Side Multi-User Engine (`localStorage`) for GitHub Pages + REST API for fullstack mode |
+| **Deployment** | GitHub Pages via GitHub Actions CI/CD |
+
+---
+
+## 📂 Annotated Folder Tree
+
+```text
+Subscription-Graveyard/
+├── .github/workflows/
+│   └── deploy.yml              # GitHub Actions CI/CD pipeline for GitHub Pages
+├── backend/                    # Optional FastAPI REST backend
+│   ├── alembic/                # Database migration scripts
+│   ├── app/
+│   │   ├── api/v1/endpoints/   # Auth, subscriptions, and dashboard endpoints
+│   │   ├── core/               # App config, database session, JWT security
+│   │   ├── models/             # SQLAlchemy ORM models (User, Subscription)
+│   │   ├── schemas/            # Pydantic validation schemas
+│   │   └── services/           # Backend calculation & query services
+│   ├── requirements.txt        # Python backend dependencies
+│   └── Dockerfile              # Container spec for backend service
+├── frontend/                   # React + TypeScript single-page application
+│   ├── public/                 # Static public assets
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── common/         # BrandLogo, ConfirmDialog, ProtectedRoute
+│   │   │   ├── dashboard/      # KillZoneChart (2-Zone Matrix), StatsCards, CategoryBreakdown
+│   │   │   └── subscriptions/  # SubscriptionCard, SubscriptionForm, SubscriptionList
+│   │   ├── context/
+│   │   │   ├── AuthContext.tsx     # Session state & demo mode handler
+│   │   │   └── LanguageContext.tsx # TH/EN translation dictionary & switcher
+│   │   ├── pages/
+│   │   │   ├── DashboardPage.tsx   # Value Matrix overview & insights
+│   │   │   ├── SubscriptionsPage.tsx # List, filter, search, & CSV export
+│   │   │   ├── AssessmentPage.tsx  # Category priority survey & benchmarks
+│   │   │   ├── LoginPage.tsx       # Sign in & instant demo launcher
+│   │   │   └── RegisterPage.tsx    # User registration
+│   │   ├── services/           # Storage engine & API services
+│   │   ├── types/              # TypeScript interfaces for subscriptions & users
+│   │   └── utils/
+│   │       ├── calculations.ts # Daily-to-monthly/yearly conversions & Zone thresholds
+│   │       └── csvExport.ts    # CSV data exporter
+│   ├── package.json            # Node.js dependencies & scripts
+│   ├── tailwind.config.js      # Custom minimal Toggl color palette
+│   └── vite.config.ts          # Vite configuration with base path for GitHub Pages
+├── docker-compose.yml          # Local PostgreSQL database setup
+└── README.md                   # Project documentation
+```
+
+---
+
+## ⚡ Commands & Quickstart
+
+### 🖥️ Frontend (Quickest way to run)
+
+```bash
+# 1. Navigate to frontend directory
+cd frontend
+
+# 2. Install dependencies
+npm install
+
+# 3. Start local development server
+npm run dev
+# 👉 Local preview: http://localhost:5173
+
+# 4. Run type check & build production bundle
+npm run build
+
+# 5. Run tests
+npm test
+```
+
+### 🐳 Backend & Database (Optional fullstack mode)
+
+```bash
+# 1. Start PostgreSQL via Docker
+docker-compose up -d postgres
+
+# 2. Setup Python environment
+cd backend
+python -m venv venv
+
+# Activate venv:
+# Windows (PowerShell):
+.\venv\Scripts\Activate.ps1
+# macOS/Linux:
+source venv/bin/activate
+
+# 3. Install requirements & run migrations
+pip install -r requirements.txt
+alembic upgrade head
+
+# 4. Start FastAPI server
+uvicorn app.main:app --reload
+# 👉 API documentation: http://localhost:8000/docs
+```
+
+---
+
+## 📄 License
+
+Distributed under the **MIT License**. Created by [@ZillerDX](https://github.com/ZillerDX).
